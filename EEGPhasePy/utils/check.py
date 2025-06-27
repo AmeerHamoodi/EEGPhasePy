@@ -49,7 +49,7 @@ def _check_type(value, types):
 
   value : any
       Value to be checked
-  types : array of "array" | "int"
+  types : array of "array" | "int" | "float"
       Type value should match.
   '''
 
@@ -57,4 +57,6 @@ def _check_type(value, types):
     raise TypeError("Value must be an array type")
   elif types == "int" and not isinstance(value, int):
     raise TypeError("Value must be an int type")
+  elif types == "float" and not isinstance(value, float):
+    raise TypeError("Value must be a float type")
       

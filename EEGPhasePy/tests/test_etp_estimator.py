@@ -116,3 +116,16 @@ def test_etp_fit():
       etp = construct_default_etp()
       etp.fit(param_set[0], param_set[1])
       assert etp.Tadj == pytest.approx(80, 2) # check if Tadj roughly equal to pre-defined period (80ms)
+
+def test_etp_predict():
+  # Load test files
+  # Test if predict successfuly predicts with no errors
+  # Test if predict fails when given non-array
+  # Test if predict fails when given 2D array
+  # Test if predict fails when given non-float target_phase
+  pass
+
+def test_etp_predict_performance():
+  # Load test files
+  # Test if predict performs as expected on test files mean == mean and std == std for phase
+  pass

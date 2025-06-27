@@ -128,17 +128,34 @@ class ETP:
 
   def predict(self, data, target_phase):
     '''
-    Predicts next sample target phase occurs at
+    Predicts the next sample target phase occurs at
 
-    data - window of EEG data to predict with
-    target_phase - target phase to predict in rad
+    Parameters
+    ----------
+    data : array_like (n_samples)
+        Window of EEG data from target channel to predict from
+    target_phase : float
+        Target phase to predict in radians
 
-    return - sample of predicted target phase
+    -------
+    Returns
+    -------
+    relative_next_phase : int
+        Next sample target phase occurs, defined relative to window start
     '''
+
+    _check_type(data, "array")
+    _check_type(target_phase, "float")
+
+    _check_array_dimensions(data, [(1,)])
+
     fs = 1000
     downsampled_window = signal.resample(data, int(fs*len(data) / self.sampling_rate))
     filtered_window = self._filter_data(self.real_time_filter, downsampled_window)
     peaks = signal.find_peaks(filtered_window)[0]
+
+    if len(peaks) == 0:
+      raise RuntimeError("No peaks could be found in the window passed into the `predict` method")
 
     Tadj = self.Tadj * target_phase/2*np.pi
 
