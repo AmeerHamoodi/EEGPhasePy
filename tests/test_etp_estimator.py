@@ -3,7 +3,7 @@ import numpy as np
 import scipy.signal as signal
 
 
-from ..estimators import ETP
+from ..EEGPhasePy.estimators import ETP
 
 real_time_filter_fir = signal.firwin(128, [8, 13], fs=2048, pass_zero=False)
 real_time_filter_iir = signal.butter(3, [8, 13], btype="bandpass", fs=2048)
