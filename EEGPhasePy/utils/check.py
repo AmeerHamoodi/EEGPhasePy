@@ -40,7 +40,7 @@ def _check_array_dimensions(test_array, target_shape_structures):
   if failed:
     raise ValueError("The provided array has the wrong dimension. Arrays can have the following dimensions:" + "".join([" %dD" % len(_struct) for _struct in target_shape_structures]))
 
-def _check_type(value, types):
+def _check_type(value: any, types: list):
   '''
   Checks if value matches a specific type(s). Raises type error if value doesn't match type
 
@@ -53,10 +53,25 @@ def _check_type(value, types):
       Type value should match.
   '''
 
-  if types == "array" and not _is_array(value):
-    raise TypeError("Value must be an array type")
-  elif types == "int" and not isinstance(value, int):
-    raise TypeError("Value must be an int type")
-  elif types == "float" and not isinstance(value, float):
-    raise TypeError("Value must be a float type")
-      
+  type_to_message_map = {
+    "array": "an array",
+    "int": "an int",
+    "float": "a float"
+  }
+  one_type_correct = False
+
+  for type in types:
+    if type == "array" and not _is_array(value):
+      continue
+    elif type == "int" and not isinstance(value, int):
+      continue
+    elif type == "float" and not isinstance(value, float):
+      continue
+    else:
+      one_type_correct = True
+  
+  if not one_type_correct:
+    if len(types) == 1:
+      raise TypeError("Value must be " + type_to_message_map[type] + " type")
+    else:
+      raise TypeError("Value must be one of: " + ' or '.join(types))

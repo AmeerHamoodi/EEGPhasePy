@@ -1,11 +1,18 @@
 import numpy as np
 import scipy.signal as signal
 import scipy.stats as stats
+from typing import Self
+from .estimator import Estimator
 
 from ..utils.check import _check_array_dimensions, _check_type
 
-class ETP:
-  def __init__(self, real_time_filter, ground_truth_filter, sampling_rate, window_len=500, window_edge=40):
+class ETP(Estimator):
+  def __init__(self, 
+               real_time_filter: np.ndarray, 
+               ground_truth_filter: np.ndarray, 
+               sampling_rate: int, 
+               window_len=500,
+               window_edge=40):
     '''
     Construct a model for the educated-temporal-prediction (ETP) model of phase estimation (Shirinpour et al., 2020)
 
@@ -24,47 +31,15 @@ class ETP:
     window_edge : 40 | int
         Window edge to remove in ms. Optional parameter to specify edge to remove after applying real_time_filter\n
     '''
-    self.Tadj = None
-
-    _check_type(real_time_filter, 'array')
-    _check_type(ground_truth_filter, 'array')
-    _check_type(window_len, 'int')
-    _check_type(window_edge, 'int')
-    _check_type(sampling_rate, 'int')
-
-    _check_array_dimensions(real_time_filter, [(1,), (1, 1)])
-    _check_array_dimensions(ground_truth_filter, [(1,), (1,1)])
-
-    self.ground_truth_filter = ground_truth_filter
-    self.sampling_rate = sampling_rate
-    
-    self.real_time_filter = real_time_filter
-    self.window_len = window_len
-    self.window_edge = window_edge
+    super().__init__(real_time_filter, ground_truth_filter, sampling_rate, window_len, window_edge)
+    self.Tadj: int
   
-  def _filter_data(self, dsp_filter, data):
-    '''
-    Forward/backward filters data using an FIR or IIR filter
-
-    Parameters
-    ----------
-    dsp_filter : array_like shape (n_parameters) | array_like shape (2, n_parameters)
-        Filter to apply to data
-    data : array (n_samples,)
-        1D array repreenting window to filter
-    
-    -------
-    Returns
-    -------
-    filtered_data : array (n_samples,)
-        Data after filtering
-    '''
-    return signal.filtfilt(dsp_filter, 1.0, data) if hasattr(self.ground_truth_filter, '__len__') \
-      else signal.filtfilt(dsp_filter[0], dsp_filter[0], data)
-  
-  def fit(self, training_data, min_ipi):
+  def fit(self, training_data: np.ndarray | list, min_ipi: int) -> Self:
     '''
     Estimates ideal Tadj for training data and updates self object with new Tadj.
+
+    In cases of high phase instability, ETP may not converge onto the ideal Tadj. Using
+    a more aggressive ground-truth filter typically helps
 
     Parameters
     ----------
@@ -78,13 +53,13 @@ class ETP:
     -------
     self
     '''
-    _check_type(training_data, "array")
-    _check_type(min_ipi, "int")
+    _check_type(training_data, ["array"])
+    _check_type(min_ipi, ["int"])
     _check_array_dimensions(training_data, [(1,)]) # ensure training data is 1D
         
-    fs = 1000
-    resampled_training_data = signal.resample(training_data, int(fs*len(training_data) / self.sampling_rate))
-    filtered_data = self._filter_data(self.ground_truth_filter, resampled_training_data)
+    fs = self.sampling_rate
+    # resampled_training_data = signal.resample(training_data, int(fs*len(training_data) / self.sampling_rate))
+    filtered_data = self._filter_data(self.ground_truth_filter, training_data)
     # ground truth is hard to define for phase estimation, see Zrenner et al., 2020 for a more detailed discussion
     ground_truth_phase = np.angle(signal.hilbert(filtered_data), deg=True) % 360
 
@@ -98,12 +73,15 @@ class ETP:
     bias_direction = None
     last_mean = None
     mean_differences = []
+
+    window_len = int((self.window_len / 1000) * fs) 
+
     while True:
       triggered_phases = []
 
       for i in range(255):
         window_i = 90*fs + 350*i
-        window_data = resampled_training_data[window_i:window_i + self.window_len]
+        window_data = training_data[window_i:window_i + window_len]
         filtered_window = self._filter_data(self.real_time_filter, window_data)[:-self.window_edge]
 
         peaks = signal.find_peaks(filtered_window)[0]
@@ -126,7 +104,7 @@ class ETP:
       
       bias += bias_direction
 
-  def predict(self, data, target_phase):
+  def predict(self, data: np.ndarray | list, target_phase: float) -> np.int64:
     '''
     Predicts the next sample target phase occurs at
 
@@ -144,20 +122,18 @@ class ETP:
         Next sample target phase occurs, defined relative to window start
     '''
 
-    _check_type(data, "array")
-    _check_type(target_phase, "float")
+    _check_type(data, ["array"])
+    _check_type(target_phase, ["float", "int"])
 
     _check_array_dimensions(data, [(1,)])
 
-    fs = 1000
-    downsampled_window = signal.resample(data, int(fs*len(data) / self.sampling_rate))
-    filtered_window = self._filter_data(self.real_time_filter, downsampled_window)
+    filtered_window = self._filter_data(self.real_time_filter, data)
     peaks = signal.find_peaks(filtered_window)[0]
 
     if len(peaks) == 0:
       raise RuntimeError("No peaks could be found in the window passed into the `predict` method")
 
-    Tadj = self.Tadj * target_phase/2*np.pi
+    Tadj: int = int(self.Tadj * target_phase/2*np.pi)
 
     return peaks[-1] + Tadj
     
