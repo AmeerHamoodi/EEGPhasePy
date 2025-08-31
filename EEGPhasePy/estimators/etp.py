@@ -7,6 +7,17 @@ from .estimator import Estimator
 from ..utils.check import _check_array_dimensions, _check_type
 
 class ETP(Estimator):
+  '''
+  The Educated Temporal Prediction (ETP) model :cite:t:`Shirinpour2020-ef`
+
+  ETP was first described by :cite:t:`Shirinpour2020-ef`. A more in depth
+  description can be found there.
+
+  Briefly, this EEG phase estimation model works by estimating the average inter-peak
+  interval for the target EEG band. In real-time, ETP predicts the next time 
+  the target phase will occur at (:math:`T_{adj}`)
+
+  '''
   def __init__(self, 
                real_time_filter: np.ndarray, 
                ground_truth_filter: np.ndarray, 
@@ -48,7 +59,7 @@ class ETP(Estimator):
     min_ipi : int
         Minimum inter peak interval, should be the period of the upper frequency of the target band
     
-    -------
+
     Returns
     -------
     self
@@ -115,7 +126,7 @@ class ETP(Estimator):
     target_phase : float
         Target phase to predict in radians
 
-    -------
+
     Returns
     -------
     relative_next_phase : int

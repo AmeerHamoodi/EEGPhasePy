@@ -5,6 +5,10 @@ import scipy.stats as stats
 from ..utils.check import _check_array_dimensions, _check_type
 
 class Estimator:
+  '''
+    Base model for all phase estimators. This class contains the helper functions, validation and base parameters
+    needed for all estimators.
+  '''
   def __init__(self, 
                 real_time_filter: np.ndarray, 
                 ground_truth_filter: np.ndarray, 
@@ -81,8 +85,9 @@ class Estimator:
     toDegree=False : bool 
         Whether to convert the phase data into degree. By default this is value is false
     fullCircle=False : bool
-        Whether to express phase values in full circle format (i.e. 0 to 360 or 0 to :math:`2r'\pi'`) or the default format (-180 to 180 or :math:`-r'\pi'` to :math:`r'\pi'`)
-    -------
+        Whether to express phase values in full circle format (i.e. 0 to 360 or 0 to :math:`2\pi`) or the default format (-180 to 180 or :math:`-\pi` to :math:`\pi`)
+    
+
     Returns
     -------
     phase_data : array_like (n_parameters)

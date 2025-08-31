@@ -9,7 +9,7 @@ EEGPhasePy documentation
 Tookit for developing and analyzing real-time and psuedo-real-time EEG phase estimation.
 
 Getting started
-----
+----------------
 .. toctree::
    :maxdepth: 3
 
@@ -17,9 +17,16 @@ Getting started
    getting-started/quickstart
 
 Usage
-----
+----------------
 .. toctree::
    :maxdepth: 3
 
    usage/etp
    usage/plots
+
+Reference
+----------------
+.. toctree::
+   :maxdepth: 3
+
+   api
