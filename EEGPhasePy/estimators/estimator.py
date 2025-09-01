@@ -1,8 +1,10 @@
 import numpy as np
 import scipy.signal as signal
 import scipy.stats as stats
+import matplotlib
 
 from ..utils.check import _check_array_dimensions, _check_type
+from ..viz import plot_polar_histogram, plot_waveform_average
 
 class Estimator:
   '''
@@ -78,9 +80,9 @@ class Estimator:
 
     Parameters
     ----------
-    data : array_like (n_parameters)
+    data : array_like (n_samples)
         The ground truth filtered EEG data in array format that the triggers correspond to
-    triggers : array_like (n_parameters)
+    triggers : array_like (n_samples)
         The sample number each trigger occurred at within the given EEG data
     toDegree=False : bool 
         Whether to convert the phase data into degree. By default this is value is false
@@ -90,12 +92,15 @@ class Estimator:
 
     Returns
     -------
-    phase_data : array_like (n_parameters)
+    phase_data : array_like (n_samples)
         An array containing the phase, in radians, each trigger in the `triggers` argument occurred at
     '''
     _check_type(data, ["array"])
     _check_type(triggers, ["array"])
+    _check_type(toDegree, ["bool"])
+    _check_type(fullCircle, ["bool"])
     _check_array_dimensions(data, [(1,)])
+    _check_array_dimensions(triggers, [(1,)])
 
     filtered_data = self._filter_data(self.ground_truth_filter, data)
     phase = np.angle(signal.hilbert(filtered_data)[triggers])
@@ -104,6 +109,147 @@ class Estimator:
       phase = np.rad2deg(phase)
     
     if fullCircle:
-      phase = phase%360 if toDegree else phase%2*np.pi
+      phase = phase % 360 if toDegree else phase % (2*np.pi)
 
     return phase
+  
+  def get_waveforms_from_triggers(self, data: np.ndarray, triggers: list | np.ndarray, tmin: int | float, tmax: int | float, fs: int) -> np.ndarray:
+    '''
+    Get the corresponding waveform window for each trigger sample
+
+    Parameters
+    ----------
+    data : array_like (n_samples)
+        The ground truth filtered EEG data in array format that the triggers correspond to
+    triggers : array_like (n_samples)
+        The sample number each trigger occurred at within the given EEG data
+    tmin : int | float
+        The time in seconds pre-trigger to include in the waveform window
+    tmax : int | float
+        The time in seconds post-trigger to include in the waveform window    
+    fs : int
+        The sampling rate of the data
+
+    Returns
+    -------
+    waveform_data : array_like (n_waveforms, n_samples)
+        A 2D array containing the each waveform
+    '''
+    _check_type(data, ["array"])
+    _check_type(triggers, ["array"])
+    _check_type(tmin, ["int", "float"])
+    _check_type(tmax, ["int", "float"])
+    _check_array_dimensions(data, [(1,)])
+    _check_array_dimensions(triggers, [(1,)])
+
+    waveform_windows = []
+    window_start_sample = int(tmin * fs)
+    window_end_sample = int(tmax * fs)
+
+    for trigger_sample in triggers:
+      waveform_windows.append(data[window_start_sample - trigger_sample:trigger_sample + window_end_sample])
+    
+    return waveform_windows
+      
+  
+  def polar_histogram_from_triggers(self, data: np.ndarray, triggers: list | np.ndarray, toDegree=False) -> matplotlib.pyplot.Figure:
+    '''
+    Plot polar histogram from trigger samples and raw EEG data
+
+    Parameters
+    -----------
+    data : array_like (n_samples)
+        The raw EEG data array
+    triggers : array_like (n_samples)
+        The samples at which triggers occurred
+    toDegree : bool
+        Optional. By default is False. Whether to plot the polar histogram in degrees or radians
+    
+    Returns
+    --------
+    polar_histogram_figure : matplotlib.pyplot.Figure
+        The pyplot figure of the polar histogram
+    '''
+    phase_data = self.get_phase_from_triggers(data, triggers, toDegree=False)
+
+    return plot_polar_histogram(phase_data, toDegree=toDegree)
+  
+  def mean_phase_from_triggers(self, data: np.ndarray, triggers: list | np.ndarray, toDegree=False) -> float:
+    '''
+    Get the circular mean for phase from trigger samples
+
+    Parameters
+    -----------
+    data : array_like (n_samples)
+        The raw EEG data array
+    triggers : array_like (n_samples)
+        The samples at which triggers occurred
+    toDegree : bool
+        Optional. By default is False. Whether to plot the polar histogram in degrees or radians
+    
+    Returns
+    ---------
+    circular_mean_phase : float
+        The circular mean phase
+    '''
+    phase_data = self.get_phase_from_triggers(data, triggers, toDegree=False)
+
+    if toDegree:
+      return stats.circmean(np.rad2deg(phase_data) % 360)
+    else:
+      return stats.circmean(phase_data % 2*np.pi)
+
+  def std_phase_from_triggers(self, data: np.ndarray, triggers: list | np.ndarray, toDegree=False) -> float:
+    '''
+    Get the circular standard deviation for phase from trigger samples
+
+    Parameters
+    -----------
+    data : array_like (n_samples)
+        The raw EEG data array
+    triggers : array_like (n_samples)
+        The samples at which triggers occurred
+    toDegree : bool
+        Optional. By default is False. Whether to plot the polar histogram in degrees or radians
+    
+    Returns
+    --------
+    phase_circular_std : float
+        The phase data's circular standard deviation
+    '''
+    phase_data = self.get_phase_from_triggers(data, triggers, toDegree=False)
+
+    if toDegree:
+      return stats.circstd(np.rad2deg(phase_data) % 360)
+    else:
+      return stats.circstd(phase_data % 2*np.pi)
+  
+  def plot_mean_std_waveform_from_triggers(self, data: np.ndarray, triggers: list | np.ndarray, tmin: int | float, tmax: int | float, fs: int) -> matplotlib.pyplot.Figure:
+    '''
+    Plot mean waveform and standard deviation highlight from a set of triggers
+
+    Parameters
+    -----------
+    data : array_like (n_samples)
+        The raw EEG data array
+    triggers : array_like (n_samples)
+        The samples at which triggers occurred
+    tmin : int | float
+        The time in seconds pre-trigger to include in the waveform window
+    tmax : int | float
+        The time in seconds post-trigger to include in the waveform window    
+    fs : int
+        The sampling rate of the data
+    
+    Returns
+    --------
+    waveform_avg_plot: matplotlib.pyplot.Figure
+        The pyplot figure of the average waveform
+    '''
+    waveforms = self.get_waveforms_from_triggers(data, triggers)
+
+    # Need to find t_trigger
+    t_trigger = len(waveforms[0]) - (int(fs * tmin))
+
+    return plot_waveform_average(waveforms, fs, t_trigger)
+

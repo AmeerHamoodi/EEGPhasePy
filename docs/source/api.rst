@@ -1,6 +1,10 @@
 API Reference
 ===================
 
+Here you can find the API reference for EEGPhasePy.
+
+Estimators
+----------------
 .. autoclass:: EEGPhasePy.estimators.Estimator
     :members:
     :inherited-members:
@@ -11,3 +15,9 @@ API Reference
 
 .. bibliography:: references.bib
     :style: unsrt
+
+
+Visualization
+------------------
+.. automodule:: EEGPhasePy.viz
+    :members:

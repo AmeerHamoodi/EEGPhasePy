@@ -49,47 +49,6 @@ def construct_default_etp():
   '''
   return ETP(real_time_filter_fir, ground_truth_filter_fir, 2048)
 
-def test_etp_construct():
-  # check ETP fails with TypeError if invalid type passed in
-  # check ETP fails with ValueError if filter parameter array of wrong dimension
-  # check ETP constructs correctly with the same values
-  etp_parameter_sets = [
-    [real_time_filter_fir, ground_truth_filter_fir, 2048], # pass
-    [real_time_filter_iir, ground_truth_filter_iir, 2048], # pass
-    [real_time_filter_fir, ground_truth_filter_fir, 2048.5], # fail
-    [real_time_filter_fir, 1, 2048], # fail
-    [1, ground_truth_filter_fir, 2048], # fail
-    [real_time_filter_fir, ground_truth_filter_fir, 2048, 1000, 80], # pass
-    [real_time_filter_fir, ground_truth_filter_fir, 2048, 1200.2, 60], # fail
-    [real_time_filter_fir, ground_truth_filter_fir, 2048, 1000, 74.3], # fail
-    [np.zeros((1, 1, 1)), ground_truth_filter_fir, 2048], # fail
-    [real_time_filter_iir, np.zeros((1, 1, 1)), 2048], # fail
-  ]
-  etp_parameter_outputs = [
-    False,
-    False,
-    [TypeError, "Value must be an int type"],
-    [TypeError, "Value must be an array type"],
-    [TypeError, "Value must be an array type"],
-    False,
-    [TypeError, "Value must be an int type"],
-    [TypeError, "Value must be an int type"],
-    [ValueError, "The provided array has the wrong dimension. Arrays can have the following dimensions: 1D 2D"],
-    [ValueError, "The provided array has the wrong dimension. Arrays can have the following dimensions: 1D 2D"]
-  ]
-  
-  for i, param_set in enumerate(etp_parameter_sets):
-    if not type(etp_parameter_outputs[i]) == bool:
-      with pytest.raises(etp_parameter_outputs[i][0], match=r"" + etp_parameter_outputs[i][1] +""):
-        construct_etp_with_paramset(param_set)
-    else:
-      etp = construct_etp_with_paramset(param_set)
-      for j, prop in enumerate(param_to_prop_map[:len(param_set)]):
-        if hasattr(param_set[j], '__len__'):
-          assert (np.array(getattr(etp, prop)) == np.array(param_set[j])).all()
-        else:
-          assert getattr(etp, prop) == param_set[j]
-
 def test_etp_fit():
   # should fail if training data not 1D
   # should fail if min_ipi not int

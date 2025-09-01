@@ -49,14 +49,15 @@ def _check_type(value: any, types: list):
 
   value : any
       Value to be checked
-  types : array of "array" | "int" | "float"
+  types : array of "array" | "int" | "float" | "bool"
       Type value should match.
   '''
 
   type_to_message_map = {
     "array": "an array",
     "int": "an int",
-    "float": "a float"
+    "float": "a float",
+    "bool": "a bool"
   }
   one_type_correct = False
 
@@ -66,6 +67,8 @@ def _check_type(value: any, types: list):
     elif type == "int" and not isinstance(value, int):
       continue
     elif type == "float" and not isinstance(value, float):
+      continue
+    elif type == "bool" and not isinstance(value, bool):
       continue
     else:
       one_type_correct = True
