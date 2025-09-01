@@ -11,8 +11,7 @@ from ..utils.check import _check_array_dimensions, _check_type
 
 class PHASTIMATE(Estimator):
     '''
-    Class for the PHASTIMATE algorithm created by :cite:t:`Zrenner2020-zb`. If you use this class
-    please cite :cite:t:`Zrenner2020-zb`
+    Class for the PHASTIMATE algorithm created by :cite:t:`Zrenner2020-zb`
 
     PHASTIMATE uses an autoregressive approach to fill in data impacted by filter edge effects
     then applys a hilbert transform to extract the phase at the current time. It is best used 
@@ -31,7 +30,7 @@ class PHASTIMATE(Estimator):
                  sampling_rate: int,
                  window_len=500,
                  window_edge=40,
-                 ar_order=10):
+                 ar_order=30):
         '''
         Constructor for PHASTIMATE class
 
@@ -120,6 +119,6 @@ class PHASTIMATE(Estimator):
         full_data = np.concatenate([filtered_data, forecasted_data])
 
         analytic_signal = signal.hilbert(full_data)
-        phase_t0 = np.angle(analytic_signal[-edge + 1], deg=True) % 360
+        phase_t0 = np.angle(analytic_signal[-edge], deg=True) % 360
 
         return np.isclose(phase_t0, target_phase % 360, atol=tolerance) or np.isclose(phase_t0, 360 - (target_phase % 360), atol=tolerance)
