@@ -21,7 +21,8 @@ license-files = ["LICENCSE"]
 dependencies = [
   "matplotlib >= 3.8",
   "numpy >= 1.26,<3",
-  "scipy >= 1.11"
+  "scipy >= 1.11",
+  "statsmodels >= 0.14"
 ]
 
 [project.urls]

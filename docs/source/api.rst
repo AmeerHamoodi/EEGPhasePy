@@ -13,11 +13,15 @@ Estimators
     :members:
     :inherited-members:
 
-.. bibliography:: references.bib
-    :style: unsrt
+.. autoclass:: EEGPhasePy.estimators.PHASTIMATE
+    :members:
+    :inherited-members:
 
 
 Visualization
 ------------------
 .. automodule:: EEGPhasePy.viz
     :members:
+
+.. bibliography:: references.bib
+    :style: unsrt

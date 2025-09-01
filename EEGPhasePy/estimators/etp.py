@@ -9,7 +9,8 @@ from ..utils.check import _check_array_dimensions, _check_type
 
 class ETP(Estimator):
     '''
-    The Educated Temporal Prediction (ETP) model :cite:t:`Shirinpour2020-ef`
+    The Educated Temporal Prediction (ETP) model :cite:t:`Shirinpour2020-ef`. If you use this class
+    please cite :cite:t:`Shirinpour2020-ef`
 
     ETP was first described by :cite:t:`Shirinpour2020-ef`. A more in depth
     description can be found there.
@@ -38,7 +39,7 @@ class ETP(Estimator):
             Filter parameters for filter to use during ETP training (should be constructed with fs of 1000).
             Accounts for FIR or IIR filters\n
         sampling_rate : int
-            Original sampling rate of data. As per Shirinpour et al., 2020, data are downsampled to 1kHz\n
+            Original sampling rate of data.
         window_len : 500 | int
             Window length in ms. Optional parameter to specify window length to train ETP with. This should match whatever is used in real-time\n
         window_edge : 40 | int
