@@ -155,29 +155,6 @@ class Estimator:
 
         return waveform_windows
 
-    def polar_histogram_from_triggers(self, data: np.ndarray, triggers: list | np.ndarray, toDegree=False) -> matplotlib.pyplot.Figure:
-        '''
-        Plot polar histogram from trigger samples and raw EEG data
-
-        Parameters
-        -----------
-        data : array_like (n_samples)
-            The raw EEG data array
-        triggers : array_like (n_samples)
-            The samples at which triggers occurred
-        toDegree : bool
-            Optional. By default is False. Whether to plot the polar histogram in degrees or radians
-
-        Returns
-        --------
-        polar_histogram_figure : matplotlib.pyplot.Figure
-            The pyplot figure of the polar histogram
-        '''
-        phase_data = self.get_phase_from_triggers(
-            data, triggers, toDegree=False)
-
-        return plot_polar_histogram(phase_data, toDegree=toDegree)
-
     def mean_phase_from_triggers(self, data: np.ndarray, triggers: list | np.ndarray, toDegree=False) -> float:
         '''
         Get the circular mean for phase from trigger samples
@@ -230,6 +207,37 @@ class Estimator:
         else:
             return stats.circstd(phase_data % 2*np.pi)
 
+    def phase_accuracy_from_triggers(self, data: np.ndarray[float], triggers: list[int] | np.ndarray[int], target_phase: float) -> float:
+        '''
+        Compute the accuracy of the triggers to the target phase. An accuracy of 50% means that the targeting
+        is completely random. An accuracy below 50% means, the triggers tend to occur more often at
+        the opposite phase.
+
+        Parameters
+        -----------
+        data : array_like (n_samples)
+            The raw EEG data array
+        triggers : array_like (n_samples)
+            The array containing the samples trigger occurred at
+        target_phase : float
+            The phase to target given in radians
+
+        Returns
+        --------
+        accuracy : float
+            The accuracy in decimal form        
+        '''
+        if len(triggers) == 0:
+            return 0
+
+        phase = self.get_phase_from_triggers(data, triggers)
+
+        phase_difference = np.exp(phase*1j - target_phase*1j)
+        mean_degree_difference = np.abs(np.angle(
+            np.sum(phase_difference), deg=True)) / (len(triggers) * 180)
+
+        return 1 - mean_degree_difference
+
     def plot_mean_std_waveform_from_triggers(self, data: np.ndarray, triggers: list | np.ndarray, tmin: int | float, tmax: int | float, fs: int) -> matplotlib.pyplot.Figure:
         '''
         Plot mean waveform and standard deviation highlight from a set of triggers
@@ -258,3 +266,26 @@ class Estimator:
         t_trigger = len(waveforms[0]) - (int(fs * tmin))
 
         return plot_waveform_average(waveforms, fs, t_trigger)
+
+    def polar_histogram_from_triggers(self, data: np.ndarray, triggers: list | np.ndarray, toDegree=False) -> matplotlib.pyplot.Figure:
+        '''
+        Plot polar histogram from trigger samples and raw EEG data
+
+        Parameters
+        -----------
+        data : array_like (n_samples)
+            The raw EEG data array
+        triggers : array_like (n_samples)
+            The samples at which triggers occurred
+        toDegree : bool
+            Optional. By default is False. Whether to plot the polar histogram in degrees or radians
+
+        Returns
+        --------
+        polar_histogram_figure : matplotlib.pyplot.Figure
+            The pyplot figure of the polar histogram
+        '''
+        phase_data = self.get_phase_from_triggers(
+            data, triggers, toDegree=False)
+
+        return plot_polar_histogram(phase_data, toDegree=toDegree)

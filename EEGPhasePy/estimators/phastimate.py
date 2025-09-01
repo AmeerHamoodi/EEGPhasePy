@@ -1,9 +1,11 @@
 import numpy as np
 import scipy.signal as signal
 import scipy.stats as stats
-from typing import Self
+from typing import Literal
 from statsmodels.regression.linear_model import yule_walker
 from statsmodels.tsa.ar_model import AutoReg
+import pygad
+from bayes_opt import BayesianOptimization
 
 from .estimator import Estimator
 from ..utils.check import _check_array_dimensions, _check_type
@@ -84,6 +86,170 @@ class PHASTIMATE(Estimator):
             forecast.append(new_val)
 
         return np.array(forecast[p:])
+
+    def _generate_black_box_function(self, data: np.ndarray[float] | list[float]):
+        '''
+        Generates a function that runs a psuedo-real-time simulation of the autoregressive model
+        on `data` and computes accuracy to peaks. The psuedo-real-time simulation
+        will use provided window_len and will use a step of 0.01s. When the target
+        phase is detected, the window will jump by 1 x its length
+
+        Parameters
+        -----------
+        data : np.ndarray[float] | list[float] 
+            The (n_samples,) array containing the unfiltered EEG data to use for simulations
+
+        Returns
+        --------
+        black_box_function : function
+            The black box function that simulates the AR model with provided parameters and outputs accuracy
+        '''
+        _check_type(data, ['array'])
+        _check_array_dimensions(data, [(1,)])
+
+        def black_box_function(edge: float, ar_order: float) -> float:
+            self.window_edge = int(edge)
+            self.ar_order = int(ar_order)
+
+            fs = self.sampling_rate
+            window_i = 0
+            window_len = self.window_len
+            window_step = int(0.01*fs)
+
+            triggers = []
+
+            while window_i + window_len < len(data):
+                window_data = data[window_i:window_i + window_len]
+                if self.predict(window_data, 0, 10):
+                    triggers.append(window_i + window_len)
+                    window_i += window_len
+
+                window_i += window_step
+
+            accuracy = self.phase_accuracy_from_triggers(data, triggers, 0)
+
+            return accuracy
+
+        return black_box_function
+
+    def _generate_fitness_function(self, data: np.ndarray[float] | list[float]):
+        '''
+        Generates a function that runs a psuedo-real-time simulation of the autoregressive model
+        on `data` and computes accuracy to peaks. The psuedo-real-time simulation
+        will use provided window_len and will use a step of 0.05s. When the target
+        phase is detected, the window will jump by 1 x its length
+
+        Parameters
+        -----------
+        data : np.ndarray[float] | list[float] 
+            The (n_samples,) array containing the unfiltered EEG data to use for simulations
+
+        Returns
+        --------
+        fitness_function : function
+            The fitness function that simulates the AR model with provided parameters and outputs accuracy
+        '''
+        _check_type(data, ['array'])
+        _check_array_dimensions(data, [(1,)])
+
+        def fitness_function(ga_instance: pygad.GA, solution: list[int], solution_i: int) -> float:
+            _solution = [int(sol) for sol in solution]
+
+            self.window_edge = _solution[0]
+            self.ar_order = _solution[1]
+
+            fs = self.sampling_rate
+            window_i = 0
+            window_len = self.window_len
+            window_step = int(0.05*fs)
+
+            triggers = []
+
+            while window_i + window_len < len(data):
+                window_data = data[window_i:window_i + window_len]
+                if self.predict(window_data, 0, 5):
+                    triggers.append(window_i + window_len)
+                    window_i += window_len
+
+                window_i += window_step
+
+            accuracy = self.phase_accuracy_from_triggers(data, triggers, 0)
+
+            return accuracy
+
+        return fitness_function
+
+    def optimize_parameters(self, data: np.ndarray[float] | list[float], method: Literal["bayesian", "genetic"] = "bayesian") -> None:
+        '''
+        Perform optimization over the amount of edge removed following filtering 
+        and autoregressive order. This method will update the properties of the current PHASTIMATE
+        instance.
+
+        Parameters
+        -----------
+        data : np.ndarray[float] | list[float] 
+            The (n_samples,) array containing the unfiltered EEG data to use for optimization
+        method : "bayesian" | "genetic"
+            Whether to perform bayesian optimization or genetic optimization
+        '''
+        if method == "bayesian":
+            parameter_bounds = {
+                "edge": [5, float(np.min([60, self.window_len / 8]))],
+                "ar_order": [1.0, 0.1 * self.sampling_rate]
+            }
+            optimizer = BayesianOptimization(
+                self._generate_black_box_function(data), pbounds=parameter_bounds)
+
+            print(
+                "[PHASTIMATE Bayesian Optimization] Starting bayesian optimization....")
+            optimizer.maximize(10, n_iter=100)
+            print("[PHASTIMATE Bayesian Optimization] Optimization complete")
+
+            print("[PHASTIMATE Bayesian Optimization] Accuracy of best parameters",
+                  optimizer.max['target'])
+            self.window_edge = int(optimizer.max["params"]["edge"])
+            self.ar_order = int(optimizer.max["params"]["ar_order"])
+        else:
+            gene_space = [
+                list(np.arange(10, np.min(
+                    [80, self.window_len / 8]), 5, dtype=int)),
+                list(np.arange(1, int(0.1 * self.sampling_rate), dtype=int))
+            ]
+            num_generations = 20
+            num_parents_mating = 4
+
+            fitness_function = self._generate_fitness_function(data)
+
+            sol_per_pop = 5
+            num_genes = len(gene_space)
+
+            parent_selection_type = "rws"
+
+            def on_gen(ga_instance) -> None:
+                print("[PHASTIMATE Genetic Optimization] Generation : ",
+                      ga_instance.generations_completed)
+                print("[PHASTIMATE Genetic Optimization] Accuracy of the best solution :",
+                      ga_instance.best_solution()[1])
+
+            print("[PHASTIMATE Genetic Optimization] Starting genetic optimization")
+            ga_instance = pygad.GA(num_generations=num_generations,
+                                   num_parents_mating=num_parents_mating,
+                                   fitness_func=fitness_function,
+                                   sol_per_pop=sol_per_pop,
+                                   num_genes=num_genes,
+                                   gene_space=gene_space,
+                                   parent_selection_type=parent_selection_type,
+                                   on_generation=on_gen,
+                                   mutation_percent_genes=50)
+            ga_instance.run()
+
+            solution, solution_fitness, solution_i = ga_instance.best_solution()
+            print("[PHASTIMATE Genetic Optimization] Optimization complete")
+            print(
+                "[PHASTIMATE Genetic Optimization] Accuracy of best parameters: " + str(solution_fitness))
+
+            self.window_edge = solution[0]
+            self.ar_order = solution[1]
 
     def predict(self, data: np.ndarray[float] | list[float], target_phase: float | int, tolerance: float | int = 5) -> bool:
         '''

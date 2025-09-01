@@ -22,7 +22,9 @@ dependencies = [
   "matplotlib >= 3.8",
   "numpy >= 1.26,<3",
   "scipy >= 1.11",
-  "statsmodels >= 0.14"
+  "statsmodels >= 0.14",
+  "pygad >= 3.5.0",
+  "bayesian-optimization >= 3.1.0"
 ]
 
 [project.urls]
