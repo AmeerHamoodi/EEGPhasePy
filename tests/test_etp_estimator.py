@@ -2,8 +2,10 @@ import pytest
 import numpy as np
 import scipy.signal as signal
 import scipy.stats as stats
-import mne
 import os
+
+if os.getenv('GITHUB_ACTIONS') == False:
+    import mne
 
 
 from EEGPhasePy.estimators import ETP
