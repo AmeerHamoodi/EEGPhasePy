@@ -2,8 +2,6 @@ from EEGPhasePy.estimators import PHASTIMATE
 import pytest
 import numpy as np
 import scipy.signal as signal
-import scipy.stats as stats
-import mne
 
 from EEGPhasePy.utils import check
 
