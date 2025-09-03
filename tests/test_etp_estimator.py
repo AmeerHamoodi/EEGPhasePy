@@ -150,5 +150,5 @@ def test_etp_real_data():
         window_i += window_step
 
     # Obtain phase from trigger indecies
-    assert stats.circmean(etp.get_phase_from_triggers(C3_test_data, triggers, degree=True, fullCircle=True)) == pytest.approx(0, 5) \
-        or stats.circmean(etp.get_phase_from_triggers(C3_test_data, triggers, degree=True, fullCircle=True)) == pytest.approx(360, 5)
+    assert stats.circmean(etp.get_phase_from_triggers(C3_test_data, triggers, degree=True, full_circle=True)) == pytest.approx(0, 5) \
+        or stats.circmean(etp.get_phase_from_triggers(C3_test_data, triggers, degree=True, full_circle=True)) == pytest.approx(360, 5)

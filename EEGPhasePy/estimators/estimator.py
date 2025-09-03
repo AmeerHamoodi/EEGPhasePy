@@ -85,7 +85,7 @@ class Estimator:
                                 data: np.ndarray,
                                 triggers: list | np.ndarray,
                                 degree=False,
-                                fullCircle=False) -> np.ndarray:
+                                full_circle=False) -> np.ndarray:
         '''
         Get the corresponding phase for each trigger sample
 
@@ -100,7 +100,7 @@ class Estimator:
         degree=False : bool
             Whether to convert the phase data into degree. By default this is
             value is false
-        fullCircle=False : bool
+        full_circle=False : bool
             Whether to express phase values in full circle format (i.e. 0 to
             360 or 0 to :math:`2\\pi`) or the default format
             (-180 to 180 or :math:r`-\\pi` to :math:`\\pi`)
@@ -115,7 +115,7 @@ class Estimator:
         _check_type(data, ["array"])
         _check_type(triggers, ["array"])
         _check_type(degree, ["bool"])
-        _check_type(fullCircle, ["bool"])
+        _check_type(full_circle, ["bool"])
         _check_array_dimensions(data, [(1,)])
         _check_array_dimensions(triggers, [(1,)])
 
@@ -125,7 +125,7 @@ class Estimator:
         if degree:
             phase = np.rad2deg(phase)
 
-        if fullCircle:
+        if full_circle:
             phase = phase % 360 if degree else phase % (2*np.pi)
 
         return phase

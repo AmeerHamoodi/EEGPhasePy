@@ -209,7 +209,7 @@ class PHASTIMATE(Estimator):
 
         Parameters
         -----------
-        data : np.ndarray[float] | list[float] 
+        data : np.ndarray[float] | list[float]
             The (n_samples,) array containing the unfiltered EEG data to use
              for optimization
         method : "bayesian" | "genetic"
