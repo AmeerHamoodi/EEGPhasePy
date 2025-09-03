@@ -21,8 +21,8 @@ def _is_array(value):
 
 def _check_array_dimensions(test_array, target_shape_structures):
     '''
-    Checks if two arrays share the same dimensions (i.e. both are 1D, 2D, 3D, etc). Raises value error if 
-    array doesn't match target dimension
+    Checks if two arrays share the same dimensions (i.e. both are 1D, 2D, 3D,
+    etc). Raises value error if array doesn't match target dimension
 
     Parameters
     ----------
@@ -40,13 +40,16 @@ def _check_array_dimensions(test_array, target_shape_structures):
             failed = False
 
     if failed:
-        raise ValueError("The provided array has the wrong dimension. Arrays can have the following dimensions:" +
-                         "".join([" %dD" % len(_struct) for _struct in target_shape_structures]))
+        raise ValueError("The provided array has the wrong dimension." +
+                         "Arrays can have the following dimensions:" +
+                         "".join([" %dD" % len(_struct)
+                                  for _struct in target_shape_structures]))
 
 
 def _check_type(value: any, types: list):
     '''
-    Checks if value matches a specific type(s). Raises type error if value doesn't match type
+    Checks if value matches a specific type(s). Raises type error if value
+    doesn't match type
 
     Parameters
     ----------

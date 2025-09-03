@@ -10,14 +10,16 @@ import matplotlib.pyplot as plt
 from .utils.check import _check_type, _check_array_dimensions
 
 
-def plot_polar_histogram(phase_data: np.ndarray[float | int], bin_width=22.5) -> plt.Figure:
+def plot_polar_histogram(phase_data: np.ndarray[float | int],
+                         bin_width=22.5) -> plt.Figure:
     '''
     Plot the polar histogram for an array of phases
 
     Parameters
     -----------
     phase_data : ndarray[float | int]
-        An array of floats containing the phases to construct a histogram out of. Must be in radians
+        An array of floats containing the phases to construct a histogram out
+        of. Must be in radians
     bar_width : float | int
         The width of the bin in degrees
 
@@ -42,28 +44,35 @@ def plot_polar_histogram(phase_data: np.ndarray[float | int], bin_width=22.5) ->
     centers = np.deg2rad(np.ediff1d(b)//2 + b[:-1])
 
     ax = fig.add_subplot(111, projection='polar')
-    ax.bar(centers, a, width=np.deg2rad(bin_size), bottom=0.0, alpha=0.8, facecolor=(
-        3/255, 148/255, 252/255), edgecolor=(0/255, 98/255, 255/255), linewidth=2)
+    ax.bar(centers, a, width=np.deg2rad(bin_size), bottom=0.0, alpha=0.8,
+           facecolor=(3/255, 148/255, 252/255),
+           edgecolor=(0/255, 98/255, 255/255),
+           linewidth=2)
     ax.set_theta_zero_location("N")
     ax.set_theta_direction(-1)
 
     return fig
 
 
-def plot_waveform_average(waveforms: np.ndarray[float | int], fs: int, t_trigger: int, show_std=True) -> plt.Figure:
+def plot_waveform_average(waveforms: np.ndarray[float | int],
+                          fs: int,
+                          t_trigger: int,
+                          show_std=True) -> plt.Figure:
     '''
-    Plot the average waveform and standard deviation as a highlight around the mean waveform
+    Plot the average waveform and standard deviation as a highlight around the
+    mean waveform
 
     Parameters
     ----------
     waveforms : array_like (n_trigger_segments, n_time)
-        A 2D array containing some pre-trigger and post-trigger waveform content
+        A 2D array containing some pre-trigger and post-trigger waveform
+        content
     fs : int
         The sampling rate of the data
     t_trigger : int
         The sample number that corresponds to `t = 0`
     show_std : bool
-        Defaults to True. Whether to show the standard deviation highlight or not
+        Defaults to True. Whether to show the standard deviation highlight
 
     Returns
     --------
