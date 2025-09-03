@@ -16,7 +16,7 @@ jobs:
 
       - name: Install testing dependencies
         run: |
-          pip install flake8 pep8-naming
+          pip install flake8 pep8-naming pytest
 
       - name: Install package dependencies
         run: |
