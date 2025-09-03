@@ -122,7 +122,7 @@ def test_etp_predict():
 
 
 def test_etp_real_data():
-    if os.getenv('GITHUB_ACTIONS') is not True:
+    if not os.getenv('GITHUB_ACTIONS') == 'true':
         # Load test files
         training_data = mne.io.read_raw_curry(
             "./tests/test_data/training-rsEEG.cdt")
