@@ -51,20 +51,20 @@ class ETP(Estimator):
         '''
         super().__init__(real_time_filter, ground_truth_filter,
                          sampling_rate, window_len, window_edge)
-        self.Tadj: int
+        self.tadj: int
 
     def fit(self, training_data: np.ndarray | list, min_ipi: int) -> Self:
         '''
-        Estimates ideal Tadj for training data and updates self object with
-        new Tadj.
+        Estimates ideal tadj for training data and updates self object with
+        new tadj.
 
         In cases of high phase instability, ETP may not converge onto the
-        ideal Tadj. Using a more aggressive ground-truth filter typically helps
+        ideal tadj. Using a more aggressive ground-truth filter typically helps
 
         Parameters
         ----------
         training_data : array (n_samples,)
-            1D samples array of channel to estimate Tadj for
+            1D samples array of channel to estimate tadj for
         min_ipi : int
             Minimum inter peak interval, should be the period of the upper
             frequency of the target band
@@ -127,7 +127,7 @@ class ETP(Estimator):
                     np.real(np.exp(1j*last_mean - 1j*mean_phase))
                 if len(mean_differences) > 0 and \
                         mean_differences[-1] < difference_mean:
-                    self.Tadj = period + bias - bias_direction
+                    self.tadj = period + bias - bias_direction
                     return self
 
                 mean_differences.append(difference_mean)
@@ -167,6 +167,6 @@ class ETP(Estimator):
                 "No peaks could be found in the window passed into the \
                     `predict` method")
 
-        Tadj: int = int(self.Tadj * target_phase/2*np.pi)
+        tadj: int = int(self.tadj * target_phase/2*np.pi)
 
-        return peaks[-1] + Tadj
+        return peaks[-1] + tadj

@@ -84,7 +84,7 @@ class Estimator:
     def get_phase_from_triggers(self,
                                 data: np.ndarray,
                                 triggers: list | np.ndarray,
-                                toDegree=False,
+                                degree=False,
                                 fullCircle=False) -> np.ndarray:
         '''
         Get the corresponding phase for each trigger sample
@@ -97,13 +97,13 @@ class Estimator:
         triggers : array_like (n_samples)
             The sample number each trigger occurred at within the
             given EEG data
-        toDegree=False : bool
+        degree=False : bool
             Whether to convert the phase data into degree. By default this is
             value is false
         fullCircle=False : bool
             Whether to express phase values in full circle format (i.e. 0 to
-            360 or 0 to :math:`2\pi`) or the default format
-            (-180 to 180 or :math:`-\pi` to :math:`\pi`)
+            360 or 0 to :math:`2\\pi`) or the default format
+            (-180 to 180 or :math:r`-\\pi` to :math:`\\pi`)
 
 
         Returns
@@ -114,7 +114,7 @@ class Estimator:
         '''
         _check_type(data, ["array"])
         _check_type(triggers, ["array"])
-        _check_type(toDegree, ["bool"])
+        _check_type(degree, ["bool"])
         _check_type(fullCircle, ["bool"])
         _check_array_dimensions(data, [(1,)])
         _check_array_dimensions(triggers, [(1,)])
@@ -122,11 +122,11 @@ class Estimator:
         filtered_data = self._filter_data(self.ground_truth_filter, data)
         phase = np.angle(signal.hilbert(filtered_data)[triggers])
 
-        if toDegree:
+        if degree:
             phase = np.rad2deg(phase)
 
         if fullCircle:
-            phase = phase % 360 if toDegree else phase % (2*np.pi)
+            phase = phase % 360 if degree else phase % (2*np.pi)
 
         return phase
 
@@ -182,7 +182,7 @@ class Estimator:
     def mean_phase_from_triggers(self,
                                  data: np.ndarray,
                                  triggers: list | np.ndarray,
-                                 toDegree=False) -> float:
+                                 degree=False) -> float:
         '''
         Get the circular mean for phase from trigger samples
 
@@ -192,7 +192,7 @@ class Estimator:
             The raw EEG data array
         triggers : array_like (n_samples)
             The samples at which triggers occurred
-        toDegree : bool
+        degree : bool
             Optional. By default is False. Whether to plot the polar histogram
             in degrees or radians
 
@@ -202,9 +202,9 @@ class Estimator:
             The circular mean phase
         '''
         phase_data = self.get_phase_from_triggers(
-            data, triggers, toDegree=False)
+            data, triggers, degree=False)
 
-        if toDegree:
+        if degree:
             return stats.circmean(np.rad2deg(phase_data) % 360)
         else:
             return stats.circmean(phase_data % 2*np.pi)
@@ -212,7 +212,7 @@ class Estimator:
     def std_phase_from_triggers(self,
                                 data: np.ndarray,
                                 triggers: list | np.ndarray,
-                                toDegree=False) -> float:
+                                degree=False) -> float:
         '''
         Get the circular standard deviation for phase from trigger samples
 
@@ -222,7 +222,7 @@ class Estimator:
             The raw EEG data array
         triggers : array_like (n_samples)
             The samples at which triggers occurred
-        toDegree : bool
+        degree : bool
             Optional. By default is False. Whether to plot the polar histogram
             in degrees or radians
 
@@ -232,9 +232,9 @@ class Estimator:
             The phase data's circular standard deviation
         '''
         phase_data = self.get_phase_from_triggers(
-            data, triggers, toDegree=False)
+            data, triggers, degree=False)
 
-        if toDegree:
+        if degree:
             return stats.circstd(np.rad2deg(phase_data) % 360)
         else:
             return stats.circstd(phase_data % 2*np.pi)
@@ -309,8 +309,7 @@ class Estimator:
 
     def polar_histogram_from_triggers(self,
                                       data: np.ndarray,
-                                      triggers: list | np.ndarray,
-                                      toDegree=False) -> \
+                                      triggers: list | np.ndarray) -> \
             matplotlib.pyplot.Figure:
         '''
         Plot polar histogram from trigger samples and raw EEG data
@@ -321,9 +320,6 @@ class Estimator:
             The raw EEG data array
         triggers : array_like (n_samples)
             The samples at which triggers occurred
-        toDegree : bool
-            Optional. By default is False. Whether to plot the polar histogram
-            in degrees or radians
 
         Returns
         --------
@@ -331,6 +327,6 @@ class Estimator:
             The pyplot figure of the polar histogram
         '''
         phase_data = self.get_phase_from_triggers(
-            data, triggers, toDegree=False)
+            data, triggers, degree=False)
 
-        return plot_polar_histogram(phase_data, toDegree=toDegree)
+        return plot_polar_histogram(phase_data)

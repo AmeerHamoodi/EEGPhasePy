@@ -82,7 +82,7 @@ def test_etp_fit():
             etp = construct_default_etp()
             etp.fit(param_set[0], param_set[1])
             # check if Tadj roughly equal to pre-defined period (80ms)
-            assert etp.Tadj == pytest.approx(80, 2)
+            assert etp.tadj == pytest.approx(80, 2)
 
 
 def test_etp_predict():
@@ -150,5 +150,5 @@ def test_etp_real_data():
         window_i += window_step
 
     # Obtain phase from trigger indecies
-    assert stats.circmean(etp.get_phase_from_triggers(C3_test_data, triggers, toDegree=True, fullCircle=True)) == pytest.approx(0, 5) \
-        or stats.circmean(etp.get_phase_from_triggers(C3_test_data, triggers, toDegree=True, fullCircle=True)) == pytest.approx(360, 5)
+    assert stats.circmean(etp.get_phase_from_triggers(C3_test_data, triggers, degree=True, fullCircle=True)) == pytest.approx(0, 5) \
+        or stats.circmean(etp.get_phase_from_triggers(C3_test_data, triggers, degree=True, fullCircle=True)) == pytest.approx(360, 5)

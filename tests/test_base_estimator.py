@@ -149,6 +149,6 @@ def test_estimator_compute_phase_stats():
     estimator = Estimator(custom_filter, custom_filter, 500)
     for i, param_set in enumerate(phase_param_sets):
         assert estimator.mean_phase_from_triggers(
-            param_set[0], param_set[1], toDegree=True) == pytest.approx(trigger_param_outputs[i][0], abs=6)
+            param_set[0], param_set[1], degree=True) == pytest.approx(trigger_param_outputs[i][0], abs=6)
         assert estimator.std_phase_from_triggers(
-            param_set[0], param_set[1], toDegree=True) == pytest.approx(trigger_param_outputs[i][1], abs=15)
+            param_set[0], param_set[1], degree=True) == pytest.approx(trigger_param_outputs[i][1], abs=15)

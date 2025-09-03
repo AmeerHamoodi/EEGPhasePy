@@ -40,7 +40,7 @@ def _check_array_dimensions(test_array, target_shape_structures):
             failed = False
 
     if failed:
-        raise ValueError("The provided array has the wrong dimension." +
+        raise ValueError("The provided array has the wrong dimension. " +
                          "Arrays can have the following dimensions:" +
                          "".join([" %dD" % len(_struct)
                                   for _struct in target_shape_structures]))
