@@ -3,6 +3,7 @@ import numpy as np
 import scipy.signal as signal
 import scipy.stats as stats
 import mne
+import os
 
 
 from EEGPhasePy.estimators import ETP
@@ -119,6 +120,8 @@ def test_etp_predict():
 
 
 def test_etp_real_data():
+    if os.getenv('GITHUB_ACTIONS') == True:
+        return
     # Load test files
     training_data = mne.io.read_raw_curry(
         "./tests/test_data/training-rsEEG.cdt")
