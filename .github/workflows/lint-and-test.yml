@@ -20,7 +20,7 @@ jobs:
 
       - name: Install package dependencies
         run: |
-          pip install -e ./pyproject.toml
+          pip install -e .
 
       - name: Run flake8
         run: |
