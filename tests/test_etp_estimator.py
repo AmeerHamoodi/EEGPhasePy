@@ -122,35 +122,35 @@ def test_etp_predict():
 
 
 def test_etp_real_data():
-    if os.getenv('GITHUB_ACTIONS') == True:
-        return
-    # Load test files
-    training_data = mne.io.read_raw_curry(
-        "./tests/test_data/training-rsEEG.cdt")
-    testing_data = mne.io.read_raw_curry("./tests/test_data/testing-rsEEG.cdt")
-    fs = 2048
+    if os.getenv('GITHUB_ACTIONS') is not True:
+        # Load test files
+        training_data = mne.io.read_raw_curry(
+            "./tests/test_data/training-rsEEG.cdt")
+        testing_data = mne.io.read_raw_curry(
+            "./tests/test_data/testing-rsEEG.cdt")
+        fs = 2048
 
-    C3_train_data = training_data.pick("C3").get_data()[0]
-    C3_test_data = testing_data.pick("C3").get_data()[0]
+        C3_train_data = training_data.pick("C3").get_data()[0]
+        C3_test_data = testing_data.pick("C3").get_data()[0]
 
-    # Test if predict performs as expected on test files mean == mean and std == std for phase
+        # Test if predict performs as expected on test files mean == mean and std == std for phase
 
-    etp = construct_default_etp()
-    etp.fit(C3_train_data, 83)
+        etp = construct_default_etp()
+        etp.fit(C3_train_data, 83)
 
-    window_i = 0
-    window_step = int(0.063 * fs)
-    window_len = int(0.5 * fs)
+        window_i = 0
+        window_step = int(0.063 * fs)
+        window_len = int(0.5 * fs)
 
-    triggers = []
+        triggers = []
 
-    while window_i + window_len < len(C3_test_data):
-        window_data = C3_test_data[window_i:window_i + window_len]
+        while window_i + window_len < len(C3_test_data):
+            window_data = C3_test_data[window_i:window_i + window_len]
 
-        triggers.append(etp.predict(window_data, 0) + window_i)
+            triggers.append(etp.predict(window_data, 0) + window_i)
 
-        window_i += window_step
+            window_i += window_step
 
-    # Obtain phase from trigger indecies
-    assert stats.circmean(etp.get_phase_from_triggers(C3_test_data, triggers, degree=True, full_circle=True)) == pytest.approx(0, 5) \
-        or stats.circmean(etp.get_phase_from_triggers(C3_test_data, triggers, degree=True, full_circle=True)) == pytest.approx(360, 5)
+        # Obtain phase from trigger indecies
+        assert stats.circmean(etp.get_phase_from_triggers(C3_test_data, triggers, degree=True, full_circle=True)) == pytest.approx(0, 5) \
+            or stats.circmean(etp.get_phase_from_triggers(C3_test_data, triggers, degree=True, full_circle=True)) == pytest.approx(360, 5)
