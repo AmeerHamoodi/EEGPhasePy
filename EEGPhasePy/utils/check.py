@@ -30,11 +30,10 @@ def _check_array_dimensions(test_array, target_shape_structures):
     target_shape_structure : array_like
         Array representing the target structures
     '''
-    np_test_array = np.array(test_array)
     failed = True
     for struct in target_shape_structures:
         np_target_shape_structure = np.array(struct)
-        if len(np_test_array.shape) == len(np_target_shape_structure):
+        if len(np.shape(test_array)) == len(np_target_shape_structure):
             failed = False
 
     if failed:
