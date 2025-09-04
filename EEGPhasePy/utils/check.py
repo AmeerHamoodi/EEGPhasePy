@@ -10,7 +10,6 @@ def _is_array(value):
     value : any
         Value to check
 
-    -------
     Returns
     -------
     bool
@@ -26,7 +25,6 @@ def _check_array_dimensions(test_array, target_shape_structures):
 
     Parameters
     ----------
-
     test_array : array_like
         Array to test dimensions of
     target_shape_structure : array_like
@@ -60,29 +58,24 @@ def _check_type(value: any, types: list):
         Type value should match.
     '''
 
-    type_to_message_map = {
-        "array": "an array",
-        "int": "an int",
-        "float": "a float",
-        "bool": "a bool"
-    }
-    one_type_correct = False
-
-    for type in types:
-        if type == "array" and not _is_array(value):
-            continue
-        elif type == "int" and not isinstance(value, int):
-            continue
-        elif type == "float" and not isinstance(value, float):
-            continue
-        elif type == "bool" and not isinstance(value, bool):
-            continue
-        else:
-            one_type_correct = True
-
-    if not one_type_correct:
-        if len(types) == 1:
-            raise TypeError("Value must be " +
-                            type_to_message_map[type] + " type")
-        else:
-            raise TypeError("Value must be one of: " + ' or '.join(types))
+    for i, type in enumerate(types):
+        if type == "array" and _is_array(value):
+            break
+        elif type == "int" and isinstance(value, int):
+            break
+        elif type == "float" and isinstance(value, float):
+            break
+        elif type == "bool" and isinstance(value, bool):
+            break
+        elif i + 1 >= len(types):
+            if len(types) == 1:
+                type_to_message_map = {
+                    "array": "an array",
+                    "int": "an int",
+                    "float": "a float",
+                    "bool": "a bool"
+                }
+                raise TypeError("Value must be " +
+                                type_to_message_map[type] + " type")
+            else:
+                raise TypeError("Value must be one of: " + ' or '.join(types))

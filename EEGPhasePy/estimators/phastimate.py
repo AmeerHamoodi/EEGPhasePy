@@ -38,27 +38,25 @@ class PHASTIMATE(Estimator):
         Constructor for PHASTIMATE class
 
         Parameters
-        -----------
-        real_time_filter : array_like shape (n_parameters) | array_like shape \
-                           (2, n_parameters)\n
-            Filter parameters for filter to apply for predicting phase (should\
-                 be constructed with fs of 1000).
-            Accounts for FIR or IIR filters\n
-        ground_truth_filter : array_like shape (n_parameters) | array_like \
-                              shape (2, n_parameters)\n
-            Filter parameters for filter to use during ETP training (should be\
-                 constructed with fs of 1000).
-            Accounts for FIR or IIR filters\n
+        ----------
+        real_time_filter
+            Filter parameters for filter to apply for predicting phase.
+            Accounts for FIR or IIR filters
+        ground_truth_filter
+            Filter parameters for identifying "true" phase. See
+            :cite:t:Zrenner2020-zb for an in-depth discussion
+            on "true" phase. Accounts for FIR or IIR filters
         sampling_rate : int
             Original sampling rate of data.
-        window_len : 500 | int
-            Window length in ms. Optional parameter to specify window length \
-                to train ETP with (not used in this estimator).
-            This should match whatever is used in real-time\n
-        window_edge : 40 | int
-            Window edge to remove in ms. Optional parameter to specify edge to\
-                remove after applying real_time_filter\n
-        ar_order : 10 | int
+        window_len : int
+            Window length in ms. Optional parameter to specify window length
+            to run pseudo-real-time simulations or to train `window_len`
+            dependent models with. This should match whatever is used in
+            real-time
+        window_edge : int
+            Window edge to remove in ms. Optional parameter to specify edge to
+            remove after applying `real_time_filter`
+        ar_order : int
             The order for the auto-regressive model
         '''
         super().__init__(real_time_filter, ground_truth_filter,
@@ -91,6 +89,8 @@ class PHASTIMATE(Estimator):
         for _ in range(steps):
             new_val = np.dot(ar_params, forecast[-p:][::-1])  # weighted sum
             forecast.append(new_val)
+            np.seterr(invalid='ignore')
+            np.seterr(over='ignore')
 
         return np.array(forecast[p:])
 
@@ -225,13 +225,13 @@ class PHASTIMATE(Estimator):
                 pbounds=parameter_bounds)
 
             print(
-                "[PHASTIMATE Bayesian Optimization] Starting bayesian \
-                      optimization....")
+                "[PHASTIMATE Bayesian Optimization] Starting bayesian" +
+                " optimization....")
             optimizer.maximize(10, n_iter=100)
             print("[PHASTIMATE Bayesian Optimization] Optimization complete")
 
-            print("[PHASTIMATE Bayesian Optimization] Accuracy of best \
-                   parameters",
+            print("[PHASTIMATE Bayesian Optimization] Accuracy of best " +
+                  "parameters",
                   optimizer.max['target'])
             self.window_edge = int(optimizer.max["params"]["edge"])
             self.ar_order = int(optimizer.max["params"]["ar_order"])
@@ -254,11 +254,11 @@ class PHASTIMATE(Estimator):
             def on_gen(ga_instance) -> None:
                 print("[PHASTIMATE Genetic Optimization] Generation : ",
                       ga_instance.generations_completed)
-                print("[PHASTIMATE Genetic Optimization] Accuracy of the best \
-                       solution :", ga_instance.best_solution()[1])
+                print("[PHASTIMATE Genetic Optimization] Accuracy of the best"
+                      + " solution :", ga_instance.best_solution()[1])
 
-            print("[PHASTIMATE Genetic Optimization] Starting genetic \
-                   optimization")
+            print("[PHASTIMATE Genetic Optimization] Starting genetic " +
+                  "optimization")
             ga_instance = pygad.GA(num_generations=num_generations,
                                    num_parents_mating=num_parents_mating,
                                    fitness_func=fitness_function,
@@ -277,8 +277,8 @@ class PHASTIMATE(Estimator):
                 "[PHASTIMATE Genetic Optimization]" +
                 "Accuracy of best parameters: " + str(solution_fitness))
 
-            self.window_edge = solution[0]
-            self.ar_order = solution[1]
+            self.window_edge = int(solution[0])
+            self.ar_order = int(solution[1])
 
     def predict(self,
                 data: np.ndarray[float] | list[float],
@@ -322,5 +322,9 @@ class PHASTIMATE(Estimator):
         analytic_signal = signal.hilbert(full_data)
         phase_t0 = np.angle(analytic_signal[-edge], deg=True) % 360
 
-        return np.isclose(phase_t0, target_phase % 360, atol=tolerance) or \
-            np.isclose(phase_t0, 360 - (target_phase % 360), atol=tolerance)
+        if target_phase % 360 - tolerance < 0:
+            return np.isclose(phase_t0, target_phase % 360, atol=tolerance) or\
+                np.isclose(phase_t0, 360 - (target_phase %
+                           360), atol=tolerance)
+        else:
+            return np.isclose(phase_t0, target_phase % 360, atol=tolerance)

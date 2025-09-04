@@ -17,30 +17,31 @@ class Estimator:
                  real_time_filter: np.ndarray,
                  ground_truth_filter: np.ndarray,
                  sampling_rate: int,
-                 window_len=500,
-                 window_edge=40):
+                 window_len: int = 500,
+                 window_edge: int = 40):
         '''
         Base model for all phase estimators. This class contains the helper
         functions, validation and base parameters needed for all estimators.
 
         Parameters
         ----------
-        real_time_filter : array_like (n_parameters) | \
-                           array_like (2, n_parameters)\n
+        real_time_filter
             Filter parameters for filter to apply for predicting phase.
-            Accounts for FIR or IIR filters\n
-        ground_truth_filter : array_like (n_parameters) | \
-                              array_like (2, n_parameters)\n
-            Filter parameters for filter to use during ETP training.
-            Accounts for FIR or IIR filters\n
+            Accounts for FIR or IIR filters
+        ground_truth_filter
+            Filter parameters for identifying "true" phase. See
+            :cite:t:Zrenner2020-zb for an in-depth discussion
+            on "true" phase. Accounts for FIR or IIR filters
         sampling_rate : int
-            Original sampling rate of data. As per Shirinpour et al., 2020
-        window_len : 500 | int
+            Original sampling rate of data.
+        window_len : int
             Window length in ms. Optional parameter to specify window length
-            to train ETP with. This should match whatever is used in real-time
-        window_edge : 40 | int
+            to run pseudo-real-time simulations or to train `window_len`
+            dependent models with. This should match whatever is used in
+            real-time
+        window_edge : int
             Window edge to remove in ms. Optional parameter to specify edge to
-            remove after applying real_time_filter\n
+            remove after applying `real_time_filter`
         '''
 
         _check_type(real_time_filter, ['array'])
@@ -78,8 +79,8 @@ class Estimator:
             Data after filtering
         '''
         return signal.filtfilt(dsp_filter, 1.0, data) \
-            if hasattr(self.ground_truth_filter, '__len__') \
-            else signal.filtfilt(dsp_filter[0], dsp_filter[0], data)
+            if len(np.shape(dsp_filter)) == 1 \
+            else signal.filtfilt(dsp_filter[0], dsp_filter[1], data)
 
     def get_phase_from_triggers(self,
                                 data: np.ndarray,
@@ -134,8 +135,7 @@ class Estimator:
                                     data: np.ndarray,
                                     triggers: list | np.ndarray,
                                     tmin: int | float,
-                                    tmax: int | float,
-                                    fs: int) -> np.ndarray:
+                                    tmax: int | float) -> np.ndarray:
         '''
         Get the corresponding waveform window for each trigger sample
 
@@ -151,8 +151,6 @@ class Estimator:
             The time in seconds pre-trigger to include in the waveform window
         tmax : int | float
             The time in seconds post-trigger to include in the waveform window
-        fs : int
-            The sampling rate of the data
 
         Returns
         -------
@@ -166,6 +164,7 @@ class Estimator:
         _check_array_dimensions(data, [(1,)])
         _check_array_dimensions(triggers, [(1,)])
 
+        fs = self.sampling_rate
         waveform_windows = []
         window_start_sample = int(tmin * fs)
         window_end_sample = int(tmax * fs)
@@ -174,7 +173,7 @@ class Estimator:
 
         for trigger_sample in triggers:
             waveform_windows.append(
-                filtered_data[window_start_sample - trigger_sample:
+                filtered_data[trigger_sample - window_start_sample:
                               trigger_sample + window_end_sample])
 
         return waveform_windows
@@ -277,8 +276,8 @@ class Estimator:
     def plot_mean_std_waveform_from_triggers(self,
                                              data: np.ndarray,
                                              triggers: list | np.ndarray,
-                                             tmin: int | float,
-                                             fs: int) -> \
+                                             tmin: float,
+                                             tmax: float) -> \
             matplotlib.pyplot.Figure:
         '''
         Plot mean waveform and standard deviation highlight from a set of
@@ -290,17 +289,19 @@ class Estimator:
             The raw EEG data array
         triggers : array_like (n_samples)
             The samples at which triggers occurred
-        tmin : int | float
+        tmin : float
             The time in seconds pre-trigger to include in the waveform window
-        fs : int
-            The sampling rate of the data
+        tmax : float
+            The time in seconds post-trigger to include in the waveform window
 
         Returns
         --------
         waveform_avg_plot: matplotlib.pyplot.Figure
             The pyplot figure of the average waveform
         '''
-        waveforms = self.get_waveforms_from_triggers(data, triggers)
+        fs = self.sampling_rate
+        waveforms = self.get_waveforms_from_triggers(
+            data, triggers, tmin, tmax)
 
         # Need to find t_trigger
         t_trigger = len(waveforms[0]) - (int(fs * tmin))

@@ -4,7 +4,7 @@ import scipy.signal as signal
 import scipy.stats as stats
 import os
 
-if os.getenv('GITHUB_ACTIONS') == False:
+if not os.getenv('GITHUB_ACTIONS') == 'true':
     import mne
 
 

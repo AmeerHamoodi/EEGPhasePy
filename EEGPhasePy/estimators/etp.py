@@ -24,22 +24,22 @@ class ETP(Estimator):
                  real_time_filter: np.ndarray,
                  ground_truth_filter: np.ndarray,
                  sampling_rate: int,
-                 window_len=500,
-                 window_edge=40):
+                 window_len: int = 500,
+                 window_edge: int = 40):
         '''
         Construct a model for the educated-temporal-prediction (ETP) model of
-        phase estimation (Shirinpour et al., 2020)
+        phase estimation :cite:t:`Shirinpour2020-ef`
 
         Parameters
         ----------
-        real_time_filter : array_like shape (n_parameters) | array_like shape \
-                           (2, n_parameters)\n
+        real_time_filter
             Filter parameters for filter to apply for predicting phase.
-            Accounts for FIR or IIR filters\n
-        ground_truth_filter : array_like (n_parameters) | array_like \
-                              (2, n_parameters)\n
-            Filter parameters for filter to use during ETP training
-            Accounts for FIR or IIR filters\n
+            Accounts for FIR or IIR filters
+        ground_truth_filter
+            Filter parameters for identifying "true" phase. Used
+            to fit ETP. See :cite:t:Zrenner2020-zb for an
+            in-depth discussion on "true" phase. Accounts for FIR
+            or IIR filters
         sampling_rate : int
             Original sampling rate of data.
         window_len : 500 | int
@@ -47,7 +47,7 @@ class ETP(Estimator):
             to train ETP with. This should match whatever is used in real-time
         window_edge : 40 | int
             Window edge to remove in ms. Optional parameter to specify edge to
-            remove after applying real_time_filter\n
+            remove after applying real_time_filter
         '''
         super().__init__(real_time_filter, ground_truth_filter,
                          sampling_rate, window_len, window_edge)
@@ -167,6 +167,6 @@ class ETP(Estimator):
                 "No peaks could be found in the window passed into the \
                     `predict` method")
 
-        tadj: int = int(self.tadj * target_phase/2*np.pi)
+        tadj: int = int(self.tadj * target_phase/(2*np.pi))
 
         return peaks[-1] + tadj

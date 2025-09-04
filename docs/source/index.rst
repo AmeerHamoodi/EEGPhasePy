@@ -10,11 +10,15 @@ Tookit for developing and analyzing real-time and psuedo-real-time EEG phase est
 
 Getting started
 ----------------
-.. toctree::
-   :maxdepth: 3
+To get started with EEGPhasePy, you will first need to install the packaeg from PyPi by running the command:
 
-   getting-started/installation
-   getting-started/quickstart
+.. code-block:: Python
+    :caption: Install EEGPhasePy
+    
+    pip install EEGPhasePy
+
+Next, look through our usage guide for phase estimation. We recommend beginning with ETP phase estimation first.
+
 
 Usage
 ----------------
@@ -22,7 +26,20 @@ Usage
    :maxdepth: 3
 
    usage/etp
+   usage/ar
+   usage/optimization
    usage/plots
+   usage/stats
+
+
+Examples
+----------
+
+.. nbgallery::
+   examples/etp-based-phase-estimation
+   examples/ar-phase-estimation
+   examples/ar-genetic-optimization
+   examples/ar-bayesian-optimization
 
 Reference
 ----------------
