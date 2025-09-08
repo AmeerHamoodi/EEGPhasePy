@@ -16,7 +16,7 @@ dip compared to other phase estimation algorithms
 
 Usage
 ---------
-Using ETP is quite simple. We'll start off by importing the ETP class, numpy to simulate EEG data and scipy.signal for filtering.
+Using ETP is quite simple. We'll start off by importing the ETP class, :mod:`numpy` to simulate EEG data and :mod:`scipy.signal` for filtering.
 
 .. code-block:: Python
    :caption: Imports
@@ -25,7 +25,7 @@ Using ETP is quite simple. We'll start off by importing the ETP class, numpy to 
 
    from EEGPhasePy.estimators import ETP
 
-Next, we'll create 2 200s long signals simulating the human alpha rhythym (assuming 10hz here) and adding in some gaussian noise.
+Next, we'll create two 200 s long signals simulating the human alpha rhythym (assuming 10 Hz here) and adding in some gaussian noise.
 Our training signal will be used to fit the ETP algorithm and then we will test it on the testing signal.
 
 .. code-block:: Python
