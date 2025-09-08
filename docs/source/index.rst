@@ -6,7 +6,7 @@
 EEGPhasePy documentation
 ========================
 
-Tookit for developing and analyzing real-time and psuedo-real-time EEG phase estimation.
+Tookit for developing and analyzing real-time and pseudo-real-time EEG phase estimation.
 
 Getting started
 ----------------
