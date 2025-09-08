@@ -6,8 +6,8 @@ contain helper methods for automatically computing mean, standard deviation and 
 
 Mean and standard deviation 
 -----------------------------
-Mean and standard deviation (std) are computed using `scipy.stats` circular statistics. To compute the mean and standard deviation of phase 
-given a list of trigger samples, you can use the `mean_phase_from_triggers` and `std_phase_from_triggers`. You can specify radian or degree output
+Mean and standard deviation (std) are computed using :py:mod:`scipy.stats` circular statistics. To compute the mean and standard deviation of phase 
+given a list of trigger samples, you can use the :py:meth:`EEGPhasePy.estimators.Estimator.mean_phase_from_triggers` and :py:meth:`EEGPhasePy.estimators.Estimator.std_phase_from_triggers`. You can specify radian or degree output
 when calling each method. See below:
 
 .. code-block:: Python
@@ -20,7 +20,7 @@ when calling each method. See below:
 Accuracy 
 ---------
 Accuracy is defined as 50% begin completely random, 0% begin completely opposite to the target phase and 100% being exactly at the target phase. 
-We calculate accuracy based no the equation described by :cite:t:`Shirinpour2020-ef`. You can specify the target phase when you call the `phase_accuracy_from_triggers`
+We calculate accuracy based no the equation described by :cite:t:`Shirinpour2020-ef`. You can specify the target phase when you call the :py:meth:`EEGPhasePy.estimators.Estimator.phase_accuracy_from_triggers`
 method:
 
 .. code-block:: Python

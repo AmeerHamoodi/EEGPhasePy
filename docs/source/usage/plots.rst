@@ -2,14 +2,14 @@ Plotting
 ========================
 
 EEGPhasePy comes with 2 plotting helper methods. We provide helper functions to plot the polar histogram given a set of trigger samples and 
-to plot the pre/post-trigger waveform average with standard deviation highlights. Each plotting method returns its `matplotlib` figure object.
+to plot the pre/post-trigger waveform average with standard deviation highlights. Each plotting method returns its :py:mod:`matplotlib` figure object.
 
 All estimators contain stats and plotting helper methods. We will describe how the plotting methods in EEGPhasePy can be used 
 with and without an estimator.
 
 Polar histogram 
 -----------------
-Assuming you have an array, `triggers`, that contains the sample values at which your target phase was triggered at
+Assuming you have an array, ``triggers``, that contains the sample values at which your target phase was triggered at
 you can plot a polar histogram using an existing estimator with the code below:
 
 .. code-block:: Python
@@ -17,7 +17,7 @@ you can plot a polar histogram using an existing estimator with the code below:
 
     polar_hist_fig = etp.polar_histogram_from_triggers(testing_signal, triggers)
 
-If you want to plot a polar histogram without creating an estimator, you can do so by using the `viz` module. See the example code below:
+If you want to plot a polar histogram without creating an estimator, you can do so by using the :py:mod:`EEGPhasePy.viz` module. See the example code below:
 
 .. code-block:: Python
    :caption: Plotting polar histogram using EEGPhasePy.viz
@@ -42,7 +42,7 @@ Waveform average
 ------------------
 Plotting the average waveform with standard deivation highlights follows similar logic to the polar histogram. With the waveform average 
 however, you must specify how much time before and after the stimulus your plot should show. The time before stimulus delievery can be specified
-using `tmin` (always positive, larger values will encompass a greater amount of pre-stimulus time) and `tmax`. You can 
+using ``tmin`` (always positive, larger values will encompass a greater amount of pre-stimulus time) and ``tmax``. You can 
 plot the pre/post-stimulus waveform given an array of trigger samples and a pre-exisitng estimator using the code below:
 
 .. code-block:: Python

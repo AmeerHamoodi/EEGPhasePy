@@ -97,9 +97,9 @@ class PHASTIMATE(Estimator):
     def _generate_black_box_function(self,
                                      data: np.ndarray[float] | list[float]):
         '''
-        Generates a function that runs a psuedo-real-time simulation of the
+        Generates a function that runs a pseudo-real-time simulation of the
         autoregressive model on `data` and computes accuracy to peaks.
-        The psuedo-real-time simulation will use the current window_len
+        The pseudo-real-time simulation will use the current window_len
         and will use a step of 0.01s. When the target phase is detected,
         the window will jump by 1 x its length
 
@@ -147,9 +147,9 @@ class PHASTIMATE(Estimator):
                                    data: np.ndarray[float] | list[float]) \
             -> Callable[..., float]:
         '''
-        Generates a function that runs a psuedo-real-time simulation of the
+        Generates a function that runs a pseudo-real-time simulation of the
         autoregressive model on `data` and computes accuracy to peaks.
-        The psuedo-real-time simulation will use provided window_len and will
+        The pseudo-real-time simulation will use provided window_len and will
         use a step of 0.05s. When the target phase is detected,
         the window will jump by 1 x its length
 

@@ -17,7 +17,7 @@ The first application of AR ran the algorithm at a frequency of 500Hz (i.e. 500 
 
 Usage
 ---------
-AR phase estimation is implemented in the PHASTIMATE class. If you use this class 
+AR phase estimation is implemented in the :py:class:`EEGPhasePy.estimators.PHASTIMATE` class. If you use this class 
 please cite :cite:t:`Zrenner2020-zb`. We'll start off by importing the PHASTIMATE class, numpy to simulate EEG data
 and scipy.signal for filtering.
 
@@ -43,7 +43,7 @@ After our signals have been created, we need to construct our real-time and grou
 we have assumed that a higher order filter will allow us to effectively obtain ground truth data for most of the signal. 
 The purpose of the ground-truth filter is to obtain the true phase. This filter would be used when computing
 phase stats (e.g. circular mean and std) based on triggers. The real-time filter is used to filter the raw window
-of EEG data passed into the `predict` method.
+of EEG data passed into the :py:meth:`EEGPhasePy.estimators.PHASTIMATE.predict` method.
 
 .. note:: A note on the "ground truth" filter 
 
@@ -57,11 +57,11 @@ of EEG data passed into the `predict` method.
    rt_filter = signal.firwin(120, [8, 12], fs=fs, pass_zero=False)
    gt_filter = signal.firwin(300, [8, 12], fs=fs, pass_zero=False)
 
-Next, we will instantiate PHASTIMATE. 
+Next, we will instantiate :py:class:`EEGPhasePy.estimators.PHASTIMATE`. 
 
 Unlike ETP, PHASTIMATE doesn't necessarily require training data. With the right parameters
-it can work out of the box. However, you may benefit from optimizing the `window_edge` and `ar_order` parameters in the class, especially 
-when there is a variability in SNR across participants. Our implementation of the PHASTIMATE toolbox includes genetic optimization in a similar 
+it can work out of the box. However, you may benefit from optimizing the ``window_edge`` and ``ar_order`` parameters in the class, especially 
+when there is variability in SNR across participants. Our implementation of the PHASTIMATE toolbox includes genetic optimization in a similar 
 manner as what :cite:t:`Zrenner2020-zb` proposed along with a Bayesian Optimization of these parameters. To run an optimization of these parameters 
 additional resting-state EEG data would need to be collected, similar to ETP. We have included examples of both optimization approaches at the 
 bottom of this page.
@@ -71,13 +71,13 @@ bottom of this page.
    
    phastimate = PHASTIMATE(rt_filter, gt_filter, fs)
 
-Now, we will run a psuedo-real-time simulation using the testing signal. Here, we use the `predict` method of the `phastimate`
-object. `predict` works by returning a boolean value about whether the current phase is your target phase. A tolerance value may also be 
-passed in. By default tolerance is 5 degrees. Tolerance indicates how close the current phase must be to the target phase for `predict`
-to return `True`.
+Now, we will run a pseudo-real-time simulation using the testing signal. Here, we use :py:meth:`EEGPhasePy.estimators.PHASTIMATE.predict`
+object. :py:meth:`EEGPhasePy.estimators.PHASTIMATE.predict` works by returning a boolean value about whether the current phase is your target phase. A tolerance value may also be 
+passed in. By default tolerance is 5 degrees. Tolerance indicates how close the current phase must be to the target phase for :py:meth:`EEGPhasePy.estimators.PHASTIMATE.predict`
+to return ``True``.
 
 .. code-block:: Python
-   :caption: Psuedo-real-time simulation with PHASTIAMTE
+   :caption: Pseudo-real-time simulation with PHASTIAMTE
 
     window_i = 2*fs
     window_len = int(0.5*fs)

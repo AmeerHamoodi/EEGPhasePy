@@ -20,8 +20,16 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'sphinxcontrib.bibtex',
-    'nbsphinx'
+    'nbsphinx',
+    'sphinx.ext.intersphinx'
 ]
+
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3/', None),
+    'numpy': ('https://numpy.org/doc/stable/', None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/', None)
+}
 
 # autosummary_generate = True
 autodoc_typehints = "description"

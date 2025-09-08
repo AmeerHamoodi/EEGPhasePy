@@ -5,7 +5,7 @@ Background
 ------------
 Educated Temporal Prediction (ETP) is a form of phase estimation that uses the time of the latest peak in the current time window and the average
 inter-peak-interval to predict the next time the desired phase will occur at. ETP was first described by :cite:t:`Shirinpour2020-ef`, so please cite
-:cite:t:`Shirinpour2020-ef` when using the ETP class of EEGPhasePy.
+:cite:t:`Shirinpour2020-ef` when using the :py:class:`EEGPhasePy.estimators.ETP` class of EEGPhasePy.
 
 The primary benefit of ETP over other phase estimation methods is its ability to work in environments with large and uncertain (within limits) 
 delays. This is especially useful considering most EEG amplifiers don't make gaurentees about communication delays and the computer running ETP in real-time will likely suffer from
@@ -67,11 +67,11 @@ on fitting ETP.
    etp = ETP(rt_filter, gt_filter, fs)
    etp.fit(training_signal, min_ipi=int(fs * 1/12))
 
-Then, we will run a psuedo-real-time simulation using the testing signal. Here, we use the `predict` method of the `etp`
+Then, we will run a pseudo-real-time simulation using the testing signal. Here, we use the `predict` method of the `etp`
 object. `predict` works by returning the next sample your target phase will occur at.
 
 .. code-block:: Python
-   :caption: Psuedo-real-time simulation with ETP
+   :caption: Pseudo-real-time simulation with ETP
 
    window_i = 0
    window_len = int(0.5*fs)
