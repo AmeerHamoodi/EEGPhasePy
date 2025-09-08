@@ -9,7 +9,8 @@ inter-peak-interval to predict the next time the desired phase will occur at. ET
 
 The primary benefit of ETP over other phase estimation methods is its ability to work in environments with large and uncertain (within limits) 
 delays. This is especially useful considering most EEG amplifiers don't make gaurentees about communication delays and the computer running ETP in real-time will likely suffer from
-jitter in scheduling your phase triggered stimulus (e.g. tES or TMS). ETP allows you to account for these delays while suffering less of an accuracy
+jitter in scheduling your phase triggered stimulus (e.g. `transcranial electrical stimulation (tES) <https://en.wikipedia.org/wiki/Transcranial_direct-current_stimulation>`_ 
+or `transcranial magnetic stimulation (TMS) <https://en.wikipedia.org/wiki/Transcranial_magnetic_stimulation>`_). ETP allows you to account for these delays while suffering less of an accuracy
 dip compared to other phase estimation algorithms
 
 
