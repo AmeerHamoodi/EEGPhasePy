@@ -24,7 +24,7 @@ Using ETP is quite simple. We'll start off by importing the ETP class, :mod:`num
 
    from EEGPhasePy.estimators import ETP
 
-Next, we'll create 2 200s long signals simulating the human alpha rhythym (assuming 10hz here) and adding in some gaussian noise.
+Next, we'll create two 200 s long signals simulating the human alpha rhythym (assuming 10 Hz here) and adding in some gaussian noise.
 Our training signal will be used to fit the ETP algorithm and then we will test it on the testing signal.
 
 .. code-block:: Python
