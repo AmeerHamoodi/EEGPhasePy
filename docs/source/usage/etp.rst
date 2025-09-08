@@ -15,7 +15,7 @@ dip compared to other phase estimation algorithms
 
 Usage
 ---------
-Using ETP is quite simple. We'll start off by importing the ETP class, numpy to simulate EEG data and scipy.signal for filtering.
+Using ETP is quite simple. We'll start off by importing the ETP class, :mod:`numpy` to simulate EEG data and :mod:`scipy.signal` for filtering.
 
 .. code-block:: Python
    :caption: Imports
