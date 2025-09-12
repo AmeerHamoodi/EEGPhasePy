@@ -18,8 +18,19 @@ Usage
 ---------
 Using ETP is quite simple. We'll start off by importing the ETP class, :mod:`numpy` to simulate EEG data and :mod:`scipy.signal` for filtering.
 
+.. doctest::
+   :hide:
+   :pyversion: == 3.12
+
+.. testsetup:: *
+   import numpy as np
+   import scipy.signal as signal
+
+   from EEGPhasePy.estimators import ETP
+
 .. code-block:: Python
    :caption: Imports
+
    import numpy as np
    import scipy.signal as signal
 
@@ -28,8 +39,7 @@ Using ETP is quite simple. We'll start off by importing the ETP class, :mod:`num
 Next, we'll create two 200 s long signals simulating the human alpha rhythym (assuming 10 Hz here) and adding in some gaussian noise.
 Our training signal will be used to fit the ETP algorithm and then we will test it on the testing signal.
 
-.. code-block:: Python
-   :caption: Simulating data
+.. testcode::
 
    fs = 2000
    time_data = np.arange(0, 200, 1/fs)
@@ -52,8 +62,7 @@ of EEG data passed into the `predict` method.
    obtain a true "ground-truth" for EEG phase. If you're interested in understanding
    more of the nuance associated with this, check out :cite:t:`Zrenner2020-zb`.
 
-.. code-block:: Python
-   :caption: Constructing our filters
+.. testcode::
    
    rt_filter = signal.firwin(120, [8, 12], fs=fs, pass_zero=False)
    gt_filter = signal.firwin(300, [8, 12], fs=fs, pass_zero=False)
@@ -62,8 +71,7 @@ Next, we will instantiate ETP and fit it to our training data. The `min_ipi` par
 time between peaks the algorithm should expect. This is used to limit the effect phase-slips or phase-resets have
 on fitting ETP.
 
-.. code-block:: Python
-   :caption: Constructing and fitting ETP
+.. testcode::
    
    etp = ETP(rt_filter, gt_filter, fs)
    etp.fit(training_signal, min_ipi=int(fs * 1/12))
@@ -71,33 +79,24 @@ on fitting ETP.
 Then, we will run a pseudo-real-time simulation using the testing signal. Here, we use the `predict` method of the `etp`
 object. `predict` works by returning the next sample your target phase will occur at.
 
-.. code-block:: Python
-   :caption: Pseudo-real-time simulation with ETP
+.. testcode::
 
-   window_i = 0
+   window_start = 0
    window_len = int(0.5*fs)
    window_step = int(0.06*fs) # using a step of 60 ms
 
    triggers = []
 
-   while window_i + window_len < len(testing_signal):
-       window = testing_signal[window_i:window_i + window_len]
+   while window_start + window_len < len(testing_signal):
+       window = testing_signal[window_start:window_start + window_len]
        
-       if window_i + window_len + etp.predict(window, 0) < len(testing_signal) - window_len:
-           triggers.append(window_i + window_len + etp.predict(window, 0))
-       window_i += window_step
+       if window_start + window_len + etp.predict(window, 0) < len(testing_signal) - window_len:
+           triggers.append(window_start + window_len + etp.predict(window, 0))
+       window_start += window_step
     
    polar_hist_fig = etp.polar_histogram_from_triggers(testing_signal, triggers)
    waveform_fig = etp.plot_mean_std_waveform_from_triggers(testing_signal, triggers, tmin=0.1, tmax=0.1)
 
 Examples 
 ----------
-
-.. nbgallery::
-
-   ../examples/etp-based-phase-estimation
-
-References
------------
-.. bibliography:: ../references.bib
-    :style: unsrt
+.. minigallery:: ../examples/etp-*

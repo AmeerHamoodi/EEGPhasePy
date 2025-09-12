@@ -20,8 +20,9 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'sphinxcontrib.bibtex',
-    'nbsphinx',
-    'sphinx.ext.intersphinx'
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.doctest',
+    'sphinx_gallery.gen_gallery'
 ]
 
 intersphinx_mapping = {
@@ -29,6 +30,11 @@ intersphinx_mapping = {
     'numpy': ('https://numpy.org/doc/stable/', None),
     "matplotlib": ("https://matplotlib.org/stable/", None),
     'scipy': ('https://docs.scipy.org/doc/scipy/', None)
+}
+
+sphinx_gallery_conf = {
+    'examples_dirs': '../examples',   # path to your example scripts
+    'gallery_dirs': 'gallery_examples',  # path to where to save gallery
 }
 
 # autosummary_generate = True

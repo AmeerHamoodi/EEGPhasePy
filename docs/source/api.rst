@@ -22,6 +22,3 @@ Visualization
 ------------------
 .. automodule:: EEGPhasePy.viz
     :members:
-
-.. bibliography:: references.bib
-    :style: unsrt

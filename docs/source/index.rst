@@ -1,8 +1,3 @@
-.. EEGPhasePy documentation master file, created by
-   sphinx-quickstart on Fri Aug 29 15:26:58 2025.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 EEGPhasePy documentation
 ========================
 
@@ -15,7 +10,7 @@ To get started with EEGPhasePy, you will first need to install the packaeg from 
 .. code-block:: Python
     :caption: Install EEGPhasePy
     
-    pip install EEGPhasePy
+    pip install eegphasepy
 
 Next, look through our usage guide for phase estimation. We recommend beginning with ETP phase estimation first.
 
@@ -32,14 +27,7 @@ Usage
    usage/stats
 
 
-Examples
-----------
-
-.. nbgallery::
-   examples/etp-based-phase-estimation
-   examples/ar-phase-estimation
-   examples/ar-genetic-optimization
-   examples/ar-bayesian-optimization
+.. include:: gallery_examples/index.rst
 
 Reference
 ----------------
@@ -47,3 +35,9 @@ Reference
    :maxdepth: 3
 
    api
+
+Bibliography
+------------------
+.. bibliography:: references.bib
+    :style: unsrt
+    :all:

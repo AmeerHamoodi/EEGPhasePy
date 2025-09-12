@@ -12,6 +12,11 @@ Polar histogram
 Assuming you have an array, ``triggers``, that contains the sample values at which your target phase was triggered at
 you can plot a polar histogram using an existing estimator with the code below:
 
+.. doctest::
+   :hide:
+   :pyversion: == 3.12
+
+
 .. code-block:: Python
    :caption: Plotting polar histogram
 
@@ -19,8 +24,7 @@ you can plot a polar histogram using an existing estimator with the code below:
 
 If you want to plot a polar histogram without creating an estimator, you can do so by using the :py:mod:`EEGPhasePy.viz` module. See the example code below:
 
-.. code-block:: Python
-   :caption: Plotting polar histogram using EEGPhasePy.viz
+.. testcode::
 
     import numpy as np
     import scipy.signal as signal
@@ -54,8 +58,4 @@ Unlike the polar histogram, you can only plot waveforms using an existing estima
 
 Examples 
 ----------
-
-.. nbgallery::
-
-   ../examples/etp-based-phase-estimation
-   ../examples/ar-phase-estimation
+.. minigallery:: ../examples/*-phase-estimation.py

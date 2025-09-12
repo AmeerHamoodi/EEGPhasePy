@@ -31,8 +31,4 @@ method:
 
 Examples 
 ----------
-
-.. nbgallery::
-
-   ../examples/etp-based-phase-estimation
-   ../examples/ar-phase-estimation
+.. minigallery:: ../examples/polar-histogram.py

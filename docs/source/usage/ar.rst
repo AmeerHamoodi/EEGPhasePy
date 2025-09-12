@@ -21,8 +21,19 @@ AR phase estimation is implemented in the :py:class:`EEGPhasePy.estimators.PHAST
 please cite :cite:t:`Zrenner2020-zb`. We'll start off by importing the PHASTIMATE class, numpy to simulate EEG data
 and scipy.signal for filtering.
 
+.. doctest::
+   :hide:
+   :pyversion: == 3.12
+
+.. testsetup:: *
+   import numpy as np
+   import scipy.signal as signal
+
+   from EEGPhasePy.estimators import PHASTIMATE
+
 .. code-block:: Python
    :caption: Imports
+
    import numpy as np
    import scipy.signal as signal
 
@@ -30,8 +41,7 @@ and scipy.signal for filtering.
 
 Next, we'll create one 200s long signal simulating the human alpha rhythym (assuming 10hz here) with some added gaussian noise.
 
-.. code-block:: Python
-   :caption: Simulating data
+.. testcode::
 
    fs = 2000
    time_data = np.arange(0, 200, 1/fs)
@@ -51,8 +61,7 @@ of EEG data passed into the :py:meth:`EEGPhasePy.estimators.PHASTIMATE.predict` 
    obtain a true "ground-truth" for EEG phase. If you're interested in understanding
    more of the nuance associated with this, check out :cite:t:`Zrenner2020-zb`.
 
-.. code-block:: Python
-   :caption: Constructing our filters
+.. testcode::
    
    rt_filter = signal.firwin(120, [8, 12], fs=fs, pass_zero=False)
    gt_filter = signal.firwin(300, [8, 12], fs=fs, pass_zero=False)
@@ -66,8 +75,7 @@ manner as what :cite:t:`Zrenner2020-zb` proposed along with a Bayesian Optimizat
 additional resting-state EEG data would need to be collected, similar to ETP. We have included examples of both optimization approaches at the 
 bottom of this page.
 
-.. code-block:: Python
-   :caption: Constructing PHASTIMATE
+.. testcode::
    
    phastimate = PHASTIMATE(rt_filter, gt_filter, fs)
 
@@ -76,36 +84,25 @@ object. :py:meth:`EEGPhasePy.estimators.PHASTIMATE.predict` works by returning a
 passed in. By default tolerance is 5 degrees. Tolerance indicates how close the current phase must be to the target phase for :py:meth:`EEGPhasePy.estimators.PHASTIMATE.predict`
 to return ``True``.
 
-.. code-block:: Python
-   :caption: Pseudo-real-time simulation with PHASTIAMTE
+.. testcode::
 
-    window_i = 2*fs
+    window_start = 2*fs
     window_len = int(0.5*fs)
     window_step = int(0.06*fs) # using a step of 60 ms
 
     triggers = []
 
-    while window_i + window_len < len(signal_noisy):
-        window = signal_noisy[window_i:window_i + window_len]
+    while window_start + window_len < len(signal_noisy):
+        window = signal_noisy[window_start:window_start + window_len]
 
         if phastimate.predict(window, 0, 15):
-            triggers.append(window_i + window_len)
+            triggers.append(window_start + window_len)
             
-        window_i += window_step
+        window_start += window_step
 
     polar_hist_fig = phastimate.polar_histogram_from_triggers(signal_noisy, triggers)
     waveform_fig = phastimate.plot_mean_std_waveform_from_triggers(signal_noisy, triggers, tmin=0.1, tmax=0.1)
 
 Examples 
 ----------
-
-.. nbgallery::
-
-   ../examples/ar-phase-estimation
-   ../examples/ar-genetic-optimization
-   ../examples/ar-bayesian-optimization
-
-References
------------
-.. bibliography:: ../references.bib
-    :style: unsrt
+.. minigallery:: ../examples/ar-*

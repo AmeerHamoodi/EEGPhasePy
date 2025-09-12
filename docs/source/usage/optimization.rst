@@ -5,13 +5,10 @@ The :py:meth:`EEGPhasePy.estimators.PHASTIMATE` parameters of ``window_edge`` an
 In certain cases, such as when dealing with high inter-individual variability or working with a frequency band that is not commonly studied, using 
 an optimization algorithm to select these parameters is ideal. We have implemented 2 approaches for optimizing these parameters.
 
-Genetic Optimization
----------------------
-
-.. nbgallery::
-   ../examples/ar-genetic-optimization
+Genetic Optimization 
+--------------------
+.. minigallery:: ../examples/ar-genetic-*
 
 Bayesian Optiization 
 ---------------------
-.. nbgallery::
-   ../examples/ar-bayesian-optimization
+.. minigallery:: ../examples/ar-bayesian-*
