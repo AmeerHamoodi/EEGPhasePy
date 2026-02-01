@@ -239,7 +239,7 @@ class Estimator:
             return stats.circstd(phase_data % 2*np.pi)
 
     def phase_accuracy_from_triggers(self,
-                                     data: np.ndarray[float],
+                                     data: np.ndarray[float | int],
                                      triggers: list[int] | np.ndarray[int],
                                      target_phase: float) -> float:
         '''

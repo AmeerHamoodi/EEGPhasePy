@@ -11,7 +11,7 @@ import sys
 sys.path.insert(0, os.path.abspath("../../"))
 
 project = 'EEGPhasePy'
-copyright = '2025, EEGPhasePy Authors'
+copyright = '2026, EEGPhasePy Authors'
 author = 'EEGPhasePy Authors'
 
 # -- General configuration ---------------------------------------------------
@@ -35,6 +35,7 @@ intersphinx_mapping = {
 sphinx_gallery_conf = {
     'examples_dirs': '../examples',   # path to your example scripts
     'gallery_dirs': 'gallery_examples',  # path to where to save gallery
+    'ignore_pattern': r"(^|/)(GALLERY_HEADER\.rst|__init__\.py)$",
 }
 
 # autosummary_generate = True

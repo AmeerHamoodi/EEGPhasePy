@@ -4,10 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "eegphasepy"
-version = "0.0.3"
+version = "0.0.5"
 authors = [
   { name="Ameer Hamoodi", email="hamoodia@mcmaster.ca" },
-  { name="Christian Brodbeck", email="brodbecc@mcmaster.ca"}
+  { name="Christian Brodbeck", email="brodbecc@mcmaster.ca"},
+  { name="Mustaali Hussain", email="hussam55@mcmaster.ca"},
+  { name="Aimee Nelson", email="nelsonaj@mcmaster.ca"}
 ]
 description = "A toolkit for EEG phase estimation"
 readme = "README.md"

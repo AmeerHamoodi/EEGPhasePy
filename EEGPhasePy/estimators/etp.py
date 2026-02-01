@@ -1,7 +1,6 @@
 import numpy as np
 import scipy.signal as signal
 import scipy.stats as stats
-from typing import Self
 from .estimator import Estimator
 
 from ..utils.check import _check_array_dimensions, _check_type
@@ -53,7 +52,7 @@ class ETP(Estimator):
                          sampling_rate, window_len, window_edge)
         self.tadj: int
 
-    def fit(self, training_data: np.ndarray | list, min_ipi: int) -> Self:
+    def fit(self, training_data: np.ndarray | list, min_ipi: int):
         '''
         Estimates ideal tadj for training data and updates self object with
         new tadj.
@@ -66,8 +65,8 @@ class ETP(Estimator):
         training_data : array (n_samples,)
             1D samples array of channel to estimate tadj for
         min_ipi : int
-            Minimum inter peak interval, should be the period of the upper
-            frequency of the target band
+            Minimum inter peak interval in number of samples, should be the
+            period of the upper frequency of the target band
 
 
         Returns
@@ -135,7 +134,7 @@ class ETP(Estimator):
 
             bias += bias_direction
 
-    def predict(self, data: np.ndarray | list, target_phase: float) \
+    def predict(self, data: np.ndarray | list, target_phase: int | float) \
             -> np.int64:
         '''
         Predicts the next sample target phase occurs at
@@ -144,7 +143,7 @@ class ETP(Estimator):
         ----------
         data : array_like (n_samples)
             Window of EEG data from target channel to predict from
-        target_phase : float
+        target_phase : int | float
             Target phase to predict in radians
 
 

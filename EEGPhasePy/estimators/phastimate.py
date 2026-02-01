@@ -65,7 +65,8 @@ class PHASTIMATE(Estimator):
         _check_type(ar_order, ['int'])
         self.ar_order = ar_order
 
-    def _ar_forecast(self, data, ar_params, steps=10) -> np.ndarray:
+    def _ar_forecast(self, data: np.ndarray | list,
+                     ar_params: np.ndarray | list, steps=10) -> np.ndarray:
         """
         Forecast future values from an AR process.
 

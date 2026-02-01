@@ -27,7 +27,9 @@ Usage
    usage/stats
 
 
-.. include:: gallery_examples/index.rst
+Gallery
+---------
+.. minigallery:: ../examples/*.py
 
 Reference
 ----------------
