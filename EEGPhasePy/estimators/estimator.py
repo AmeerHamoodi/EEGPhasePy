@@ -1,7 +1,9 @@
 import numpy as np
+import numpy.typing as npt
 import scipy.signal as signal
 import scipy.stats as stats
 import matplotlib
+from typing import Union
 
 from ..utils.check import _check_array_dimensions, _check_type
 from ..viz import plot_polar_histogram, plot_waveform_average
@@ -14,8 +16,8 @@ class Estimator:
     '''
 
     def __init__(self,
-                 real_time_filter: np.ndarray,
-                 ground_truth_filter: np.ndarray,
+                 real_time_filter: npt.ArrayLike,
+                 ground_truth_filter: npt.ArrayLike,
                  sampling_rate: int,
                  window_len: int = 500,
                  window_edge: int = 40):
@@ -53,15 +55,15 @@ class Estimator:
         _check_array_dimensions(real_time_filter, [(1,), (1, 1)])
         _check_array_dimensions(ground_truth_filter, [(1,), (1, 1)])
 
-        self.ground_truth_filter: np.ndarray = ground_truth_filter
+        self.ground_truth_filter: npt.ArrayLike = ground_truth_filter
         self.sampling_rate: int = sampling_rate
 
-        self.real_time_filter: np.ndarray = real_time_filter
+        self.real_time_filter: npt.ArrayLike = real_time_filter
         self.window_len: int = window_len
         self.window_edge: int = window_edge
 
-    def _filter_data(self, dsp_filter: np.ndarray | list,
-                     data: np.ndarray | list) -> np.ndarray:
+    def _filter_data(self, dsp_filter: npt.ArrayLike,
+                     data: npt.ArrayLike) -> np.ndarray:
         '''
         Forward/backward filters data using an FIR or IIR filter
 
@@ -83,8 +85,8 @@ class Estimator:
             else signal.filtfilt(dsp_filter[0], dsp_filter[1], data)
 
     def get_phase_from_triggers(self,
-                                data: np.ndarray,
-                                triggers: list | np.ndarray,
+                                data: npt.ArrayLike,
+                                triggers: npt.ArrayLike,
                                 degree=False,
                                 full_circle=False) -> np.ndarray:
         '''
@@ -132,10 +134,10 @@ class Estimator:
         return phase
 
     def get_waveforms_from_triggers(self,
-                                    data: np.ndarray,
-                                    triggers: list | np.ndarray,
-                                    tmin: int | float,
-                                    tmax: int | float) -> np.ndarray:
+                                    data: npt.ArrayLike,
+                                    triggers: npt.ArrayLike,
+                                    tmin: Union[int, float],
+                                    tmax: Union[int, float]) -> np.ndarray:
         '''
         Get the corresponding waveform window for each trigger sample
 
@@ -179,8 +181,8 @@ class Estimator:
         return waveform_windows
 
     def mean_phase_from_triggers(self,
-                                 data: np.ndarray,
-                                 triggers: list | np.ndarray,
+                                 data: npt.ArrayLike,
+                                 triggers: npt.ArrayLike,
                                  degree=False) -> float:
         '''
         Get the circular mean for phase from trigger samples
@@ -209,8 +211,8 @@ class Estimator:
             return stats.circmean(phase_data % 2*np.pi)
 
     def std_phase_from_triggers(self,
-                                data: np.ndarray,
-                                triggers: list | np.ndarray,
+                                data: npt.ArrayLike,
+                                triggers: npt.ArrayLike,
                                 degree=False) -> float:
         '''
         Get the circular standard deviation for phase from trigger samples
@@ -239,8 +241,8 @@ class Estimator:
             return stats.circstd(phase_data % 2*np.pi)
 
     def phase_accuracy_from_triggers(self,
-                                     data: np.ndarray[float | int],
-                                     triggers: list[int] | np.ndarray[int],
+                                     data: npt.ArrayLike,
+                                     triggers: npt.ArrayLike,
                                      target_phase: float) -> float:
         '''
         Compute the accuracy of the triggers to the target phase. An accuracy
@@ -274,8 +276,8 @@ class Estimator:
         return 1 - mean_degree_difference
 
     def plot_mean_std_waveform_from_triggers(self,
-                                             data: np.ndarray,
-                                             triggers: list | np.ndarray,
+                                             data: npt.ArrayLike,
+                                             triggers: npt.ArrayLike,
                                              tmin: float,
                                              tmax: float) -> \
             matplotlib.pyplot.Figure:
@@ -309,8 +311,8 @@ class Estimator:
         return plot_waveform_average(waveforms, fs, t_trigger)
 
     def polar_histogram_from_triggers(self,
-                                      data: np.ndarray,
-                                      triggers: list | np.ndarray) -> \
+                                      data: npt.ArrayLike,
+                                      triggers: npt.ArrayLike) -> \
             matplotlib.pyplot.Figure:
         '''
         Plot polar histogram from trigger samples and raw EEG data

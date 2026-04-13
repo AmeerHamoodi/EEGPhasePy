@@ -5,12 +5,13 @@ The visualization module consists of helper functions for plotting
 phase histograms and pre-trigger/post-trigger waveforms
 '''
 import numpy as np
+import numpy.typing as npt
 import matplotlib.pyplot as plt
 
 from .utils.check import _check_type, _check_array_dimensions
 
 
-def plot_polar_histogram(phase_data: np.ndarray[float | int],
+def plot_polar_histogram(phase_data: npt.ArrayLike,
                          bin_width=22.5) -> plt.Figure:
     '''
     Plot the polar histogram for an array of phases
@@ -54,7 +55,7 @@ def plot_polar_histogram(phase_data: np.ndarray[float | int],
     return fig
 
 
-def plot_waveform_average(waveforms: np.ndarray[float | int],
+def plot_waveform_average(waveforms: npt.ArrayLike,
                           fs: int,
                           t_trigger: int,
                           show_std=True) -> plt.Figure:

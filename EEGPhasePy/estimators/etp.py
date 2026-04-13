@@ -1,6 +1,8 @@
 import numpy as np
+import numpy.typing as npt
 import scipy.signal as signal
 import scipy.stats as stats
+from typing import Union
 from .estimator import Estimator
 
 from ..utils.check import _check_array_dimensions, _check_type
@@ -52,7 +54,7 @@ class ETP(Estimator):
                          sampling_rate, window_len, window_edge)
         self.tadj: int
 
-    def fit(self, training_data: np.ndarray | list, min_ipi: int):
+    def fit(self, training_data: npt.ArrayLike, min_ipi: int):
         '''
         Estimates ideal tadj for training data and updates self object with
         new tadj.
@@ -152,7 +154,7 @@ class ETP(Estimator):
             bias += bias_direction
             n_fitting_iterations += 1
 
-    def predict(self, data: np.ndarray | list, target_phase: int | float) \
+    def predict(self, data: npt.ArrayLike, target_phase: Union[int, float]) \
             -> np.int64:
         '''
         Predicts the next sample target phase occurs at

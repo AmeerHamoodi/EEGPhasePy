@@ -1,6 +1,7 @@
 import numpy as np
+import numpy.typing as npt
 import scipy.signal as signal
-from typing import Literal, Callable
+from typing import Literal, Callable, Union
 from statsmodels.regression.linear_model import yule_walker
 import pygad
 from bayes_opt import BayesianOptimization
@@ -28,8 +29,8 @@ class PHASTIMATE(Estimator):
     PHASTIMATE does not include optimization over filter parameters.
     '''
 
-    def __init__(self, real_time_filter: np.ndarray,
-                 ground_truth_filter: np.ndarray,
+    def __init__(self, real_time_filter: npt.ArrayLike,
+                 ground_truth_filter: npt.ArrayLike,
                  sampling_rate: int,
                  window_len=500,
                  window_edge=40,
@@ -65,8 +66,8 @@ class PHASTIMATE(Estimator):
         _check_type(ar_order, ['int'])
         self.ar_order = ar_order
 
-    def _ar_forecast(self, data: np.ndarray | list,
-                     ar_params: np.ndarray | list, steps=10) -> np.ndarray:
+    def _ar_forecast(self, data: npt.ArrayLike,
+                     ar_params: npt.ArrayLike, steps=10) -> np.ndarray:
         """
         Forecast future values from an AR process.
 
@@ -96,7 +97,7 @@ class PHASTIMATE(Estimator):
         return np.array(forecast[p:])
 
     def _generate_black_box_function(self,
-                                     data: np.ndarray[float] | list[float]):
+                                     data: npt.ArrayLike):
         '''
         Generates a function that runs a pseudo-real-time simulation of the
         autoregressive model on `data` and computes accuracy to peaks.
@@ -145,7 +146,7 @@ class PHASTIMATE(Estimator):
         return black_box_function
 
     def _generate_fitness_function(self,
-                                   data: np.ndarray[float] | list[float]) \
+                                   data: npt.ArrayLike) \
             -> Callable[..., float]:
         '''
         Generates a function that runs a pseudo-real-time simulation of the
@@ -199,7 +200,7 @@ class PHASTIMATE(Estimator):
         return fitness_function
 
     def optimize_parameters(self,
-                            data: np.ndarray[float] | list[float],
+                            data: npt.ArrayLike,
                             method: Literal["bayesian", "genetic"]
                             = "bayesian") -> None:
         '''
@@ -282,9 +283,9 @@ class PHASTIMATE(Estimator):
             self.ar_order = int(solution[1])
 
     def predict(self,
-                data: np.ndarray[float] | list[float],
-                target_phase: float | int,
-                tolerance: float | int = 5) -> bool:
+                data: npt.ArrayLike,
+                target_phase: Union[float, int],
+                tolerance: Union[float, int] = 5) -> bool:
         '''
         Predict whether the phase at the current time matches the target phase
 
