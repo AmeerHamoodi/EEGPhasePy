@@ -2,3 +2,4 @@ sphinxcontrib-bibtex
 sphinx-rtd-theme
 nbsphinx
 sphinx-gallery
+matplotlib
