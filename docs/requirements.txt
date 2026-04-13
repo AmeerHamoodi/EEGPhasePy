@@ -3,3 +3,8 @@ sphinx-rtd-theme
 nbsphinx
 sphinx-gallery
 matplotlib
+numpy
+scipy
+statsmodels
+pygad
+bayesian-optimization
