@@ -29,7 +29,10 @@ Usage
 
 Gallery
 ---------
-.. minigallery:: ../examples/*.py
+.. toctree::
+   :maxdepth: 1
+
+   gallery_examples/index
 
 Reference
 ----------------

@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import numpy.typing as npt
 import scipy.signal as signal
@@ -217,6 +218,8 @@ class PHASTIMATE(Estimator):
         method : "bayesian" | "genetic"
             Whether to perform bayesian optimization or genetic optimization
         '''
+        on_rtd = os.environ.get("READTHEDOCS") == "True"
+
         if method == "bayesian":
             parameter_bounds = {
                 "edge": [5, float(np.min([60, self.window_len / 8]))],
@@ -226,10 +229,13 @@ class PHASTIMATE(Estimator):
                 self._generate_black_box_function(data),
                 pbounds=parameter_bounds)
 
+            init_points = 2 if on_rtd else 10
+            n_iter = 5 if on_rtd else 100
+
             print(
                 "[PHASTIMATE Bayesian Optimization] Starting bayesian" +
                 " optimization....")
-            optimizer.maximize(10, n_iter=100)
+            optimizer.maximize(init_points, n_iter=n_iter)
             print("[PHASTIMATE Bayesian Optimization] Optimization complete")
 
             print("[PHASTIMATE Bayesian Optimization] Accuracy of best " +
@@ -243,7 +249,7 @@ class PHASTIMATE(Estimator):
                     [80, self.window_len / 8]), 5, dtype=int)),
                 list(np.arange(1, int(0.1 * self.sampling_rate), dtype=int))
             ]
-            num_generations = 20
+            num_generations = 3 if on_rtd else 20
             num_parents_mating = 4
 
             fitness_function = self._generate_fitness_function(data)

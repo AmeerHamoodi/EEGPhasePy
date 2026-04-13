@@ -48,7 +48,7 @@ templates_path = ['_templates']
 exclude_patterns = []
 
 bibtex_bibfiles = ['references.bib']
-bibtext_default_style = 'unsrt'
+bibtex_default_style = 'unsrt'
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
