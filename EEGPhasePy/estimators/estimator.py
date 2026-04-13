@@ -174,9 +174,10 @@ class Estimator:
         filtered_data = self._filter_data(self.ground_truth_filter, data)
 
         for trigger_sample in triggers:
-            waveform_windows.append(
-                filtered_data[trigger_sample - window_start_sample:
-                              trigger_sample + window_end_sample])
+            start = trigger_sample - window_start_sample
+            end = trigger_sample + window_end_sample
+            if start >= 0 and end <= len(filtered_data):
+                waveform_windows.append(filtered_data[start:end])
 
         return waveform_windows
 
