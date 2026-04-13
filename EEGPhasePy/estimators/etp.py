@@ -100,8 +100,15 @@ class ETP(Estimator):
         mean_differences = []
 
         window_len = int((self.window_len / 1000) * fs)
+        window_edge = int((self.window_edge / 1000) * fs)
+
+        n_fitting_iterations = 0
 
         while True:
+            if n_fitting_iterations > 100:
+                raise TimeoutError(
+                    "ETP fitting exceeded maximum allowable iterations")
+
             triggered_phases = []
 
             for i in range(255):
@@ -109,11 +116,21 @@ class ETP(Estimator):
                 window_data = training_data[window_i:window_i + window_len]
                 filtered_window = self._filter_data(
                     self.real_time_filter,
-                    window_data)[:-self.window_edge]
+                    window_data)[:-window_edge]
 
                 peaks = signal.find_peaks(filtered_window)[0]
+
+                if len(peaks) == 0:
+                    raise ValueError(
+                        "No peaks were found during ETP fitting. This could be"
+                        + "one of: a signal quality issue (try increasing"
+                        + " filter order), window length issue (try increasing"
+                        + " the window length)")
+
                 trigger_i = window_i + peaks[-1] + period + bias
-                triggered_phases.append(ground_truth_phase[trigger_i])
+
+                if trigger_i < len(ground_truth_phase) - 1:
+                    triggered_phases.append(ground_truth_phase[trigger_i])
 
             mean_phase = stats.circmean(np.deg2rad(triggered_phases))
 
@@ -133,6 +150,7 @@ class ETP(Estimator):
             last_mean = mean_phase
 
             bias += bias_direction
+            n_fitting_iterations += 1
 
     def predict(self, data: np.ndarray | list, target_phase: int | float) \
             -> np.int64:
@@ -158,8 +176,10 @@ class ETP(Estimator):
 
         _check_array_dimensions(data, [(1,)])
 
+        window_edge = int((self.window_edge / 1000) * self.sampling_rate)
+
         filtered_window = self._filter_data(self.real_time_filter, data)
-        peaks = signal.find_peaks(filtered_window)[0]
+        peaks = signal.find_peaks(filtered_window[:-window_edge])[0]
 
         if len(peaks) == 0:
             raise RuntimeError(

@@ -67,7 +67,6 @@ while window_i + window_len < len(testing_signal):
 
     window_i += window_step
 
-# sphinx_gallery_thumbnail_number = 1
 polar_hist_fig = phastimate.polar_histogram_from_triggers(
     testing_signal, triggers)
 waveform_fig = phastimate.plot_mean_std_waveform_from_triggers(

@@ -36,6 +36,9 @@ sphinx_gallery_conf = {
     'examples_dirs': '../examples',   # path to your example scripts
     'gallery_dirs': 'gallery_examples',  # path to where to save gallery
     'ignore_pattern': r"(^|/)(GALLERY_HEADER\.rst|__init__\.py)$",
+    'plot_gallery': True,
+    "thumbnail_size": (160, 112),
+    "filename_pattern": r"\.py$",
 }
 
 # autosummary_generate = True
