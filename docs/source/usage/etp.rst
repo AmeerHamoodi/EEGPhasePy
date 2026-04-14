@@ -97,6 +97,6 @@ object. `predict` works by returning the next sample your target phase will occu
    polar_hist_fig = etp.polar_histogram_from_triggers(testing_signal, triggers)
    waveform_fig = etp.plot_mean_std_waveform_from_triggers(testing_signal, triggers, tmin=0.1, tmax=0.1)
 
-Examples 
+ETP-based phase estimation 
 ----------
 .. minigallery:: ../examples/etp-*

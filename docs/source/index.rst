@@ -27,7 +27,7 @@ Usage
    usage/stats
 
 
-Gallery
+Examples
 ---------
 .. toctree::
    :maxdepth: 1

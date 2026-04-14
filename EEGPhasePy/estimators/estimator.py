@@ -207,9 +207,9 @@ class Estimator:
             data, triggers, degree=False)
 
         if degree:
-            return stats.circmean(np.rad2deg(phase_data) % 360)
+            return stats.circmean(np.rad2deg(phase_data) % 360, high=360, low=0)
         else:
-            return stats.circmean(phase_data % 2*np.pi)
+            return stats.circmean(phase_data % (2*np.pi))
 
     def std_phase_from_triggers(self,
                                 data: npt.ArrayLike,
@@ -237,9 +237,9 @@ class Estimator:
             data, triggers, degree=False)
 
         if degree:
-            return stats.circstd(np.rad2deg(phase_data) % 360)
+            return stats.circstd(np.rad2deg(phase_data) % 360, high=360, low=0)
         else:
-            return stats.circstd(phase_data % 2*np.pi)
+            return stats.circstd(phase_data % (2*np.pi))
 
     def phase_accuracy_from_triggers(self,
                                      data: npt.ArrayLike,
@@ -258,7 +258,7 @@ class Estimator:
         triggers : array_like (n_samples)
             The array containing the samples trigger occurred at
         target_phase : float
-            The phase to target given in radians
+            The phase to target given in degrees
 
         Returns
         --------
@@ -270,11 +270,11 @@ class Estimator:
 
         phase = self.get_phase_from_triggers(data, triggers)
 
-        phase_difference = np.exp(phase*1j - target_phase*1j)
-        mean_degree_difference = np.abs(np.angle(
-            np.sum(phase_difference), deg=True)) / (len(triggers) * 180)
+        target_phase_rad = np.deg2rad(target_phase)
+        phase_errors = np.angle(np.exp(1j * (phase - target_phase_rad)))
+        mean_abs_error_deg = np.mean(np.abs(np.rad2deg(phase_errors)))
 
-        return 1 - mean_degree_difference
+        return 1 - mean_abs_error_deg / 180
 
     def plot_mean_std_waveform_from_triggers(self,
                                              data: npt.ArrayLike,

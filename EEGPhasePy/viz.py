@@ -85,7 +85,7 @@ def plot_waveform_average(waveforms: npt.ArrayLike,
 
     _check_array_dimensions(waveforms, [(1, 1)])
 
-    waveform_data = None
+    waveforms = np.array(waveforms)
     if np.max(waveforms) < 5e-5:
         waveform_data = waveforms * 1e6
     else:
