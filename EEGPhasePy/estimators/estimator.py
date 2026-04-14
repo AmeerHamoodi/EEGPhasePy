@@ -207,7 +207,8 @@ class Estimator:
             data, triggers, degree=False)
 
         if degree:
-            return stats.circmean(np.rad2deg(phase_data) % 360, high=360, low=0)
+            return stats.circmean(np.rad2deg(phase_data) % 360, high=360,
+                                  low=0)
         else:
             return stats.circmean(phase_data % (2*np.pi))
 

@@ -46,99 +46,74 @@ phastimate = PHASTIMATE(rt_filter, gt_filter, fs, window_edge=35, ar_order=15)
 # Now, we will run a pseudo-real-time simulation using the testing signal. Here, we use the `predict` method of the `phastimate`
 # object. `predict` works by returning a boolean value about whether the current phase is your target phase. A tolerance value may also be
 # passed in. By default tolerance is 5 degrees. Tolerance indicates how close the current phase must be to the target phase for `predict`
-# to return `True`.
+# to return `True`. If you are finding that the time between phases being identified is too long you can try increasing tolerance. It is important to note that higher tolerance values will naturally reduce accuracy of this model.
+# Additionally, you may not want to use this model if your amplifier has a low packet send rate. The original paper implementing AR phase estimation in real-time had a packet send rate of 500 Hz. At lower rates
+# the model has fewer attempts to detect the target phase and as a result the experimenter will have less control over the inter-stimulus interval.
 
 # %%
-window_i = 2*fs
-window_len = int(0.5*fs)
-window_step = int(0.06*fs)  # using a step of 60 ms
 
-triggers = []
 
-while window_i + window_len < len(signal_noisy):
-    window = signal_noisy[window_i:window_i + window_len]
+def run_phastimate_sim(target_phase, tolerance, accuracy_target, tmin=0.1, tmax=0.1):
+    window_i = 2*fs
+    window_len = int(0.5*fs)
+    window_step = int(0.06*fs)  # using a step of 60 ms
 
-    if phastimate.predict(window, 0, 15):
-        triggers.append(window_i + window_len)
+    triggers = []
 
-    window_i += window_step
+    while window_i + window_len < len(signal_noisy):
+        window = signal_noisy[window_i:window_i + window_len]
 
-# %%
-polar_hist_fig = phastimate.polar_histogram_from_triggers(
-    signal_noisy, triggers)
-waveform_fig = phastimate.plot_mean_std_waveform_from_triggers(
-    signal_noisy, triggers, tmin=0.1, tmax=0.1)
+        # the third parameter in `phastimate.predict` indicates the tolerance in degrees
+        if phastimate.predict(window, target_phase, tolerance):
+            triggers.append(window_i + window_len)
 
-phase_standard_deviation = phastimate.std_phase_from_triggers(
-    signal_noisy, triggers, degree=True)
-phase_mean = phastimate.mean_phase_from_triggers(
-    signal_noisy, triggers, degree=True)
-accuracy = phastimate.phase_accuracy_from_triggers(signal_noisy, triggers, 0)
+        window_i += window_step
 
-print("Mean phase: " + str(phase_mean))
-print("Std phase: " + str(phase_standard_deviation))
-print("Accuracy: " + str(100*accuracy))
+    polar_hist_fig = phastimate.polar_histogram_from_triggers(
+        signal_noisy, triggers)
+    waveform_fig = phastimate.plot_mean_std_waveform_from_triggers(
+        signal_noisy, triggers, tmin=tmin, tmax=tmax)
+
+    phase_standard_deviation = phastimate.std_phase_from_triggers(
+        signal_noisy, triggers, degree=True)
+    phase_mean = phastimate.mean_phase_from_triggers(
+        signal_noisy, triggers, degree=True)
+    accuracy = phastimate.phase_accuracy_from_triggers(
+        signal_noisy, triggers, accuracy_target)
+
+    print("Mean phase: " + str(phase_mean))
+    print("Std phase: " + str(phase_standard_deviation))
+    print("Accuracy: " + str(100*accuracy))
+
+    return polar_hist_fig, waveform_fig
+
 
 # %% [markdown]
-# As with ETP, PHASTIMATE can also quite easily detect different phases simply by changing the `target_phase` argument (which uses degrees)
+# All estimators in EEGPhasePy contain a ``predict`` method that takes the unfiltered
+# sliding window data as an argument. With PHASTIMATE, ``predict`` returns ``True``
+# when the current phase matches the target phase within the given tolerance. We target
+# alpha peaks first (``target_phase = 0``).
 
 # %%
-window_i = 2*fs
-window_len = int(0.5*fs)
-window_step = int(0.06*fs)  # using a step of 60 ms
-
-triggers = []
-
-while window_i + window_len < len(signal_noisy):
-    window = signal_noisy[window_i:window_i + window_len]
-
-    if phastimate.predict(window, 270, 2):
-        triggers.append(window_i + window_len)
-    window_i += window_step
-
-polar_hist_fig = phastimate.polar_histogram_from_triggers(
-    signal_noisy, triggers)
-waveform_fig = phastimate.plot_mean_std_waveform_from_triggers(
-    signal_noisy, triggers, tmin=0.05, tmax=0.05)
-
-phase_standard_deviation = phastimate.std_phase_from_triggers(
-    signal_noisy, triggers, degree=True)
-phase_mean = phastimate.mean_phase_from_triggers(
-    signal_noisy, triggers, degree=True)
-accuracy = phastimate.phase_accuracy_from_triggers(signal_noisy, triggers, 270)
-
-print("Mean phase: " + str(phase_mean))
-print("Std phase: " + str(phase_standard_deviation))
-print("Accuracy: " + str(100*accuracy))
+polar_hist_fig, waveform_fig = run_phastimate_sim(
+    target_phase=0, tolerance=15, accuracy_target=0)
 
 # %% [markdown]
-# Similarly, to target troughs, instead of peaks, we just change the `target_phase` to :math:`90\deg`
+# As with ETP, PHASTIMATE can also quite easily detect different phases simply by
+# changing the ``target_phase`` argument (which uses degrees). Below we target the
+# alpha rising phase (``target_phase = 270``).
 
 # %%
-window_i = 2*fs
-window_len = int(0.5*fs)
-window_step = int(0.06*fs)  # using a step of 60 ms
+polar_hist_fig, waveform_fig = run_phastimate_sim(
+    target_phase=270, tolerance=2, accuracy_target=270, tmin=0.05, tmax=0.05)
 
-triggers = []
+# %% [markdown]
+# Similarly, to target troughs we change ``target_phase`` to ``180``.
 
-while window_i + window_len < len(signal_noisy):
-    window = signal_noisy[window_i:window_i + window_len]
+# %%
+polar_hist_fig, waveform_fig = run_phastimate_sim(
+    target_phase=180, tolerance=5, accuracy_target=180, tmin=0.05, tmax=0.05)
 
-    if phastimate.predict(window, 180, 5):
-        triggers.append(window_i + window_len)
-    window_i += window_step
 
-polar_hist_fig = phastimate.polar_histogram_from_triggers(
-    signal_noisy, triggers)
-waveform_fig = phastimate.plot_mean_std_waveform_from_triggers(
-    signal_noisy, triggers, tmin=0.05, tmax=0.05)
-
-phase_standard_deviation = phastimate.std_phase_from_triggers(
-    signal_noisy, triggers, degree=True)
-phase_mean = phastimate.mean_phase_from_triggers(
-    signal_noisy, triggers, degree=True)
-accuracy = phastimate.phase_accuracy_from_triggers(signal_noisy, triggers, 180)
-
-print("Mean phase: " + str(phase_mean))
-print("Std phase: " + str(phase_standard_deviation))
-print("Accuracy: " + str(100*accuracy))
+# %% [markdown]
+# The mean phase should be within 5deg of our target phase. A standard deviation between 50-70 degrees appears to be normal based on a range of published literature. Accuracy should be interepreted keeping in mind that 50% indicates completely random phase locking, 0% indicates anti-phase locking and 100% is perfect phase locking.

@@ -7,9 +7,9 @@ Autoregressive (AR) phase estimation is a form of phase estimation that uses aut
 filter edge effects and tens of milliseconds ahead of the current point in time, to account for Hilbert transform edge effects. AR was first introduced
 by :cite:t:`Zrenner2018-hh` and a toolbox for AR phase estimation known as PHASTIMATE was published by :cite:t:`Zrenner2020-zb`
 
-AR is best used in environments that make gaurentees about communication delays as foreward forecasting beyond the current point in time significantly reduces 
+AR is best used in environments that make guarantees about communication delays as forward forecasting beyond the current point in time significantly reduces 
 AR phase estimation performance. Further, to the best of our knowledge, AR has not been applied as a phase estimation algorithm in environments
-where delay gaurentees were made. It is also important to note that AR requires a high packet send rate from your EEG amplifier. This is due to the 
+where delay guarantees were made. It is also important to note that AR requires a high packet send rate from your EEG amplifier. This is due to the 
 algorithm estimating the current phase. Considering phase changes rapidly across the vast majority of EEG frequencies (except for low-delta)
 if the algorithm is only run a couple of times per second, it will very rarely encounter a sliding window whose end contains the desired phase.
 The first application of AR ran the algorithm at a frequency of 500Hz (i.e. 500 sliding windows passed into the algorithm / second) :cite:p:`Zrenner2018-hh`.
@@ -47,7 +47,7 @@ Next, we'll create one 200s long signal simulating the human alpha rhythym (assu
    time_data = np.arange(0, 200, 1/fs)
 
    signal_clean = np.sin(2 * np.pi * 10 * time_data)
-   signal_noisy = training_signal_clean + np.random.normal(0, 2, len(time_data))
+   signal_noisy = signal_clean + np.random.normal(0, 2, len(time_data))
 
 After our signals have been created, we need to construct our real-time and ground-truth filter. For simplicity, 
 we have assumed that a higher order filter will allow us to effectively obtain ground truth data for most of the signal. 

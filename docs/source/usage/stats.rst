@@ -19,14 +19,14 @@ when calling each method. See below:
 
 Accuracy 
 ---------
-Accuracy is defined as 50% begin completely random, 0% begin completely opposite to the target phase and 100% being exactly at the target phase. 
-We calculate accuracy based no the equation described by :cite:t:`Shirinpour2020-ef`. You can specify the target phase when you call the :py:meth:`EEGPhasePy.estimators.Estimator.phase_accuracy_from_triggers`
+Accuracy is defined as 50% being completely random, 0% being completely opposite to the target phase and 100% being exactly at the target phase. 
+We calculate accuracy based on the equation described by :cite:t:`Shirinpour2020-ef`. You can specify the target phase when you call the :py:meth:`EEGPhasePy.estimators.Estimator.phase_accuracy_from_triggers`
 method:
 
 .. code-block:: Python
    :caption: Computing accuracy to target phase from triggers
 
-   accuracy = etp.phase_accuracy_from_triggers(testing_signal, triggers, 0)
+   accuracy = etp.phase_accuracy_from_triggers(testing_signal, triggers, 0) # in this case the target phase was 0 deg
 
 
 Examples 

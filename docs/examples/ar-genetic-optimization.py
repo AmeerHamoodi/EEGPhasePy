@@ -5,9 +5,14 @@ Genetic optimization of PHASTIMATE parameters
 
 
 # %% [markdown]
-# It may be ideal in certain circumstances to systematically optimize the parameters involved in the PHASTIMATE toolbox. For instance, you may be dealing with a population known to contain a large degree of inter-individual variability in the SNR of your target frequency band. Thus, the PHASTIMATE parameters that work for one individual may not work well for another. You can optptimize the `window_edge` and `ar_order` parameters of PHASTIMATE to tailor the algorithm on an inter-individual basis.
+# It may be ideal in certain circumstances to systematically optimize the parameters involved in the PHASTIMATE toolbox. For instance, you may be dealing with a population known to contain a large degree of inter-individual variability in the SNR of your target frequency band. Thus, the PHASTIMATE parameters that work for one individual may not work well for another. You can optimize the `window_edge` and `ar_order` parameters of PHASTIMATE to tailor the algorithm on an inter-individual basis.
 #
-# Below we showcase how this can be done in EEGPhasePy using genetic optimization. If you use this algorithm please cite PyGAD (https://link.springer.com/article/10.1007/s11042-023-17167-y)
+# A brief explanation of each parameter: `window_edge` is the number of milliseconds of signal to remove after bandpass filtering. If you are using higher order filters, there will be greater edge effects and as a result more signal will need to be removed, hence a larger `window_edge` would be necessary,
+# :cite:t:`Zrenner2020-zb` showed that adjusting `window_edge` can improve performance of EEG phase estimation on a participant-by-participant basis, which is why the study implemented genetic optimization of `window_edge`.
+#
+# In addition to `window_edge`, `ar_order` is also optimized for. `ar_order` indicates the number of samples the Yule-Walker autoregression should use to forward forecast the next 128ms of data. Higher `ar_order` increases the "historical dependence" of autoregression as more previous points are taken into account. Importantly, higher `ar_order` is more computationally expensive and as a result it does slow down model performance, but it also can increase accuracy of phase estimation Zrenner2020-zb
+#
+# Below we showcase how PHASTIMATE-style genetic optimization can be done in EEGPhasePy. If you use this algorithm please cite PyGAD (https://link.springer.com/article/10.1007/s11042-023-17167-y)
 
 # %%
 from EEGPhasePy.estimators import PHASTIMATE
@@ -42,16 +47,27 @@ rt_filter = signal.firwin(120, [8, 12], fs=fs, pass_zero=False)
 gt_filter = signal.firwin(300, [8, 12], fs=fs, pass_zero=False)
 
 # %% [markdown]
+#  .. note::
+#    Filter order of `rt_filter` significantly affect the accuracy of phase estimation done in real-time or pseudo-real time. Higher order filters result in greater edge effects (resulting in less of the signal being usable for autoregression) but can result in much cleaner signals. It's important to balance between the two, which is why optimization of parameters on a participant-by-participant basis can be important in some cases.
+#    The filter order of `gt_filter` is important in offline cases (i.e. when analyzing previously collected phase-triggered data).
+
+# %% [markdown]
 # Next, we will instantiate PHASTIMATE.
 
 # %%
 phastimate = PHASTIMATE(rt_filter, gt_filter, fs)
 
 # %% [markdown]
-# Now we will run the genetic optimization algorithm using the `optimize_parameters` method with the `method` argument being set to genetic. This method will update the `window_edge` and `ar_order` that result in the phase estimation accuracy
+# Now we will run the genetic optimization algorithm using the `optimize_parameters` method with the `method` argument being set to genetic. This method will update the `window_edge` and `ar_order` that result in the best phase estimation accuracy
+
+# %% [markdown]
+# .. note::
+#    Keep in mind that running these optimizations is very time consuming. It can take over 10 minutes to run the optimization.
 
 # %%
 phastimate.optimize_parameters(training_signal, 'genetic')
+
+# After completing the optimization, the `window_edge` and `ar_order` are automatically updated to the optimal values.
 
 # %%
 window_i = 2*fs

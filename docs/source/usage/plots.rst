@@ -46,7 +46,7 @@ Waveform average
 ------------------
 Plotting the average waveform with standard deivation highlights follows similar logic to the polar histogram. With the waveform average 
 however, you must specify how much time before and after the stimulus your plot should show. The time before stimulus delievery can be specified
-using ``tmin`` (always positive, larger values will encompass a greater amount of pre-stimulus time) and ``tmax``. You can 
+using ``tmin`` (always positive, larger values will encompass a greater amount of pre-stimulus time. E.g. ``tmin=0.01`` would included data from 0.01s before t=0) and ``tmax``. You can 
 plot the pre/post-stimulus waveform given an array of trigger samples and a pre-exisitng estimator using the code below:
 
 .. code-block:: Python
