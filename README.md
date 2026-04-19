@@ -135,3 +135,8 @@ If you use EEGPhasePy in your research, please cite the underlying algorithm(s) 
 ## Licence
 
 BSD 3-Clause Licence. See [LICENCE](LICENCE) for details.
+
+## Acknowledgements
+
+![alt text](assets/ASC.png)
+![alt text](assets/MacNeuro.png)

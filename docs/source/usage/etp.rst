@@ -77,7 +77,8 @@ on fitting ETP.
    etp.fit(training_signal, min_ipi=int(fs * 1/12))
 
 Then, we will run a pseudo-real-time simulation using the testing signal. Here, we use the `predict` method of the `etp`
-object. `predict` works by returning the next sample your target phase will occur at.
+object. `predict` works by returning the next sample your target phase will occur at. The ``target_phase`` argument is
+specified in **degrees** (e.g. ``0`` for a peak, ``180`` for a trough, ``270`` for a rising zero-crossing).
 
 .. testcode::
 

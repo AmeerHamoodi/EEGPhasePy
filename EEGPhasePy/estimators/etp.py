@@ -164,7 +164,7 @@ class ETP(Estimator):
         data : array_like (n_samples)
             Window of EEG data from target channel to predict from
         target_phase : int | float
-            Target phase to predict in radians
+            Target phase to predict in degrees
 
 
         Returns
@@ -175,6 +175,8 @@ class ETP(Estimator):
 
         _check_type(data, ["array"])
         _check_type(target_phase, ["float", "int"])
+
+        _target_phase = np.deg2rad(target_phase)
 
         _check_array_dimensions(data, [(1,)])
 
@@ -188,6 +190,6 @@ class ETP(Estimator):
                 "No peaks could be found in the window passed into the \
                     `predict` method")
 
-        tadj: int = int(self.tadj * target_phase/(2*np.pi))
+        tadj: int = int(self.tadj * _target_phase/(2*np.pi))
 
         return peaks[-1] + tadj
