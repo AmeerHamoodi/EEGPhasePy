@@ -138,5 +138,4 @@ BSD 3-Clause Licence. See [LICENCE](LICENCE) for details.
 
 ## Acknowledgements
 
-![alt text](assets/ASC.png)
-![alt text](assets/MacNeuro.png)
+<img src="assets/ASC.png" height="80" style="margin-right: 20px;" /> <img src="assets/MacNeuro.png" height="80" />
