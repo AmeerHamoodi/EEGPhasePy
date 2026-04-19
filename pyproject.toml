@@ -19,7 +19,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 license = "BSD-3-Clause"
-license-files = ["LICENCSE"]
+license-files = ["LICENCE.md"]
 dependencies = [
   "matplotlib >= 3.8",
   "numpy >= 1.26,<3",
@@ -28,6 +28,9 @@ dependencies = [
   "pygad >= 3.5.0",
   "bayesian-optimization >= 3.1.0"
 ]
+
+[tool.setuptools.packages.find]
+include = ["EEGPhasePy*"]
 
 [project.urls]
 Homepage = "https://github.com/AmeerHamoodi/EEGPhasePy"
