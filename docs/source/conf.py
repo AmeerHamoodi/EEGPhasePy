@@ -22,7 +22,8 @@ extensions = [
     'sphinxcontrib.bibtex',
     'sphinx.ext.intersphinx',
     'sphinx.ext.doctest',
-    'sphinx_gallery.gen_gallery'
+    'sphinx_gallery.gen_gallery',
+    'matplotlib.sphinxext.plot_directive',
 ]
 
 intersphinx_mapping = {

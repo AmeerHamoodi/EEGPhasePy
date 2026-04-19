@@ -12,7 +12,9 @@ from .utils.check import _check_type, _check_array_dimensions
 
 
 def plot_polar_histogram(phase_data: npt.ArrayLike,
-                         bin_width=22.5) -> plt.Figure:
+                         bin_width=22.5,
+                         color=(3/255, 148/255, 252/255),
+                         edge_color=(0/255, 98/255, 255/255)) -> plt.Figure:
     '''
     Plot the polar histogram for an array of phases
 
@@ -21,8 +23,14 @@ def plot_polar_histogram(phase_data: npt.ArrayLike,
     phase_data : ndarray[float | int]
         An array of floats containing the phases to construct a histogram out
         of. Must be in radians
-    bar_width : float | int
+    bin_width : float | int
         The width of the bin in degrees
+    color : color
+        The fill color of the histogram bars. Accepts any matplotlib color
+        format (named color, hex string, or RGB tuple). Defaults to blue.
+    edge_color : color
+        The edge/outline color of the histogram bars. Accepts any matplotlib
+        color format. Defaults to dark blue.
 
     Returns
     --------
@@ -46,8 +54,8 @@ def plot_polar_histogram(phase_data: npt.ArrayLike,
 
     ax = fig.add_subplot(111, projection='polar')
     ax.bar(centers, a, width=np.deg2rad(bin_size), bottom=0.0, alpha=0.8,
-           facecolor=(3/255, 148/255, 252/255),
-           edgecolor=(0/255, 98/255, 255/255),
+           facecolor=color,
+           edgecolor=edge_color,
            linewidth=2)
     ax.set_theta_zero_location("N")
     ax.set_theta_direction(-1)
@@ -58,7 +66,9 @@ def plot_polar_histogram(phase_data: npt.ArrayLike,
 def plot_waveform_average(waveforms: npt.ArrayLike,
                           fs: int,
                           t_trigger: int,
-                          show_std=True) -> plt.Figure:
+                          show_std=True,
+                          color=(0/255, 98/255, 255/255),
+                          std_color=None) -> plt.Figure:
     '''
     Plot the average waveform and standard deviation as a highlight around the
     mean waveform
@@ -74,6 +84,13 @@ def plot_waveform_average(waveforms: npt.ArrayLike,
         The sample number that corresponds to `t = 0`
     show_std : bool
         Defaults to True. Whether to show the standard deviation highlight
+    color : color
+        The color of the mean waveform line and (by default) the std shading.
+        Accepts any matplotlib color format (named color, hex string, or RGB
+        tuple). Defaults to blue.
+    std_color : color | None
+        The color of the standard deviation shading. If None, uses ``color``.
+        Accepts any matplotlib color format.
 
     Returns
     --------
@@ -98,11 +115,13 @@ def plot_waveform_average(waveforms: npt.ArrayLike,
     time_end = (len(mean_waveform) - fs*time_start) / fs
     time_data = np.arange(-time_start, time_end, 1/fs)
 
+    _std_color = std_color if std_color is not None else color
+
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.plot(time_data, mean_waveform, color=(0/255, 98/255, 255/255), alpha=1)
+    ax.plot(time_data, mean_waveform, color=color, alpha=1)
     ax.fill_between(time_data, mean_waveform - waveform_std, mean_waveform +
-                    waveform_std, alpha=0.2, color=(0/255, 98/255, 255/255))
+                    waveform_std, alpha=0.2, color=_std_color)
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Amplitude (μV)")
 

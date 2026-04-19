@@ -133,14 +133,14 @@ def test_estimator_get_phase_at_triggers():
 def test_estimator_compute_phase_stats():
     phase_param_sets = [
         [np.sin(2 * np.pi * 5 * np.arange(0, 10, 1/500)),
-         [125, 225, 425, 625, 525, 825]],
+         [75, 175, 275, 375, 475, 575]],
         [np.sin(2 * np.pi * 5 * np.arange(0, 2, 1/500)) +
-         np.random.normal(0, 1, size=1000), [125, 225, 325]],
+         np.random.normal(0, 1, size=1000), [75, 175, 275]],
     ]
 
     trigger_param_outputs = [
-        [0, 0],
-        [0, 1]
+        [180, 0],
+        [180, 1]
     ]
 
     custom_filter = signal.firwin(100, [1, 5], fs=500, pass_zero=False)

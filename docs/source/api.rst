@@ -3,6 +3,8 @@ API Reference
 
 Here you can find the API reference for EEGPhasePy.
 
+.. _api-estimators:
+
 Estimators
 ----------------
 .. autoclass:: EEGPhasePy.estimators.Estimator
