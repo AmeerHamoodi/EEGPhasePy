@@ -77,8 +77,10 @@ on fitting ETP.
    etp.fit(training_signal, min_ipi=int(fs * 1/12))
 
 Then, we will run a pseudo-real-time simulation using the testing signal. Here, we use the `predict` method of the `etp`
-object. `predict` works by returning the next sample your target phase will occur at. The ``target_phase`` argument is
-specified in **degrees** (e.g. ``0`` for a peak, ``180`` for a trough, ``270`` for a rising zero-crossing).
+object. `predict` returns the **number of samples to wait after the end of the window** before delivering the stimulus.
+In a real-time system this maps directly to a delay: once you have received the current window, simply wait the returned
+number of samples and then fire the stimulus. The ``target_phase`` argument is specified in **degrees**
+(e.g. ``0`` for a peak, ``180`` for a trough, ``270`` for a rising zero-crossing).
 
 .. testcode::
 
@@ -90,11 +92,13 @@ specified in **degrees** (e.g. ``0`` for a peak, ``180`` for a trough, ``270`` f
 
    while window_start + window_len < len(testing_signal):
        window = testing_signal[window_start:window_start + window_len]
-       
-       if window_start + window_len + etp.predict(window, 0) < len(testing_signal) - window_len:
-           triggers.append(window_start + window_len + etp.predict(window, 0))
+
+       samples_to_wait = etp.predict(window, 0)
+       trigger_sample = window_start + window_len + samples_to_wait
+       if trigger_sample < len(testing_signal):
+           triggers.append(trigger_sample)
        window_start += window_step
-    
+
    polar_hist_fig = etp.polar_histogram_from_triggers(testing_signal, triggers)
    waveform_fig = etp.plot_mean_std_waveform_from_triggers(testing_signal, triggers, tmin=0.1, tmax=0.1)
 

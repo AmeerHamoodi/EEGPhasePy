@@ -169,8 +169,8 @@ class ETP(Estimator):
 
         Returns
         -------
-        relative_next_phase : int
-            Next sample target phase occurs, defined relative to window start
+        samples_to_wait : int
+            Number of samples to wait for target phase to occur
         '''
 
         _check_type(data, ["array"])
@@ -192,4 +192,4 @@ class ETP(Estimator):
 
         tadj: int = int(self.tadj * _target_phase/(2*np.pi))
 
-        return peaks[-1] + tadj
+        return tadj - (len(filtered_window) - peaks[-1])

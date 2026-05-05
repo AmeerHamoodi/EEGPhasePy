@@ -6,6 +6,7 @@ Alpha phase estimation using ETP
 # %% [markdown]
 # This tutorial willwalkthrough performing EEG phase estimation in the alpha band using ETP.
 # Two examples are provided: one using a simulated alpha signal and one using real resting state EEG from OpenNeuro dataset ds004504 (eyes-closed resting state, 500 Hz).
+# Installation of mne and openneuro are necessary for this tutorial.
 
 # %%
 from EEGPhasePy.estimators import ETP
@@ -67,9 +68,11 @@ def run_etp_sim(target_phase, accuracy_target, tmin=0.1, tmax=0.1):
     while window_i + window_len < len(testing_signal):
         window = testing_signal[window_i:window_i + window_len]
 
-        pred = etp.predict(window, target_phase)
-        if window_i + pred < len(testing_signal):
-            triggers.append(window_i + pred)
+        # predict returns samples to wait after the window end
+        samples_to_wait = etp.predict(window, target_phase)
+        trigger_sample = window_i + window_len + samples_to_wait
+        if trigger_sample < len(testing_signal):
+            triggers.append(trigger_sample)
         window_i += window_step
 
     polar_hist_fig = etp.polar_histogram_from_triggers(
@@ -95,8 +98,11 @@ def run_etp_sim(target_phase, accuracy_target, tmin=0.1, tmax=0.1):
 # Fitting the ETP model essentially calculates the optimal `Tadj` (inter-peak-interval), so we can proceed with
 # pseudo-real-time simulations on the testing data. All estimators in EEGPhasePy
 # contain a `predict` method that takes the unfiltered sliding window data as an
-# argument. With ETP, `predict` returns the sample index (relative to the window
-# start) at which the target phase is predicted to occur. We target alpha peaks
+# argument. With ETP, `predict` returns the **number of samples to wait after the
+# end of the window** before delivering the stimulus. In a real-time system, once
+# the current data window has been received, the system waits the returned number
+# of samples and then fires the stimulus. In simulation, the absolute trigger index
+# is ``window_start + window_len + samples_to_wait``. We target alpha peaks
 # first (``target_phase = 0``).
 
 # %%
@@ -145,6 +151,10 @@ openneuro.download(
     include=['sub-001']
 )
 
+# %% [markdown]
+# After downloading the dataset, we will load a file in via mne's EEGLab reader
+
+# %%
 raw_rs = mne.io.read_raw_eeglab(
     'ds004504/sub-001/eeg/sub-001_task-eyesclosed_eeg.set',
     preload=True,
@@ -195,10 +205,12 @@ while window_i_rs + window_len_rs < len(testing_signal_rs):
     window = testing_signal_rs[window_i_rs:window_i_rs + window_len_rs]
 
     try:
-        # you can adjust the second parameter to be your desired phase
-        pred = etp_rs.predict(window, 0)
-        if window_i_rs + pred < len(testing_signal_rs):
-            triggers_rs.append(window_i_rs + pred)
+        # predict returns samples to wait after the window end;
+        # adjust the second argument to change the desired phase
+        samples_to_wait = etp_rs.predict(window, 0)
+        trigger_sample = window_i_rs + window_len_rs + samples_to_wait
+        if trigger_sample < len(testing_signal_rs):
+            triggers_rs.append(trigger_sample)
     except RuntimeError:
         pass  # no peaks found in window, skip
 

@@ -48,11 +48,10 @@ values give a finer-grained histogram; larger values give a coarser summary:
 
 .. plot::
    :include-source:
-   :caption: Narrow bins (10°) vs default bins (22.5°)
+   :caption: Narrow bins (10°)
 
    import numpy as np
    import scipy.signal as signal
-   import matplotlib.pyplot as plt
    import EEGPhasePy.viz as viz
 
    fs = 2000
@@ -65,20 +64,27 @@ values give a finer-grained histogram; larger values give a coarser summary:
    rng = np.random.default_rng(0)
    phases = phase_data[peaks] + rng.normal(0, 0.7, len(peaks))
 
-   fig, axes = plt.subplots(1, 2, subplot_kw={"projection": "polar"}, figsize=(10, 4))
+   fig = viz.plot_polar_histogram(phases, bin_width=10)
 
-   for ax, bw, title in zip(axes, [10, 22.5], ["10° bins", "22.5° bins (default)"]):
-       single_fig = viz.plot_polar_histogram(phases, bin_width=bw)
-       # copy bar data into the shared axes
-       src_ax = single_fig.axes[0]
-       for bar_src in src_ax.patches:
-           import copy
-           bar_copy = copy.copy(bar_src)
-           ax.add_patch(bar_copy)
-       ax.set_theta_zero_location("N")
-       ax.set_theta_direction(-1)
-       ax.set_title(title, pad=12)
-       plt.close(single_fig)
+.. plot::
+   :include-source:
+   :caption: Default bins (22.5°)
+
+   import numpy as np
+   import scipy.signal as signal
+   import EEGPhasePy.viz as viz
+
+   fs = 2000
+   time_data = np.arange(0, 200, 1 / fs)
+   signal_clean = np.sin(2 * np.pi * 10 * time_data)
+
+   peaks = signal.find_peaks(signal_clean)[0]
+   phase_data = np.angle(signal.hilbert(signal_clean))
+
+   rng = np.random.default_rng(0)
+   phases = phase_data[peaks] + rng.normal(0, 0.7, len(peaks))
+
+   fig = viz.plot_polar_histogram(phases, bin_width=22.5)
 
 Color customization
 -------------------

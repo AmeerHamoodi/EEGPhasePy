@@ -8,5 +8,5 @@ scipy
 statsmodels
 pygad
 bayesian-optimization
-openneuro-py
+openneuro-py>=2026.4.1
 mne

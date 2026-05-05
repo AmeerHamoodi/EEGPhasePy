@@ -117,8 +117,10 @@ def test_etp_predict():
             etp = construct_default_etp()
             etp.fit(np.sin(78.5*np.arange(0, 200, 1/2048)), 63)
 
-            assert isinstance(etp.predict(
-                param_set[0], param_set[1]), np.int64)
+            samples_to_wait = etp.predict(param_set[0], param_set[1])
+            # predict returns the number of samples to wait after the end of the
+            # window before delivering a stimulus
+            assert isinstance(samples_to_wait, np.int64)
 
 
 def test_etp_real_data():
@@ -147,7 +149,9 @@ def test_etp_real_data():
         while window_i + window_len < len(C3_test_data):
             window_data = C3_test_data[window_i:window_i + window_len]
 
-            triggers.append(etp.predict(window_data, 0) + window_i)
+            # predict returns samples to wait after the window end, so the
+            # absolute trigger index is window start + window length + samples_to_wait
+            triggers.append(window_i + window_len + etp.predict(window_data, 0))
 
             window_i += window_step
 
