@@ -84,7 +84,7 @@ def test_etp_fit():
             etp = construct_default_etp()
             etp.fit(param_set[0], param_set[1])
             # check if Tadj roughly equal to pre-defined period (80ms)
-            assert etp.tadj == pytest.approx(80, 2)
+            assert etp.tadj == pytest.approx(int(0.08 * 2048), abs=10)
 
 
 def test_etp_predict():
@@ -151,7 +151,8 @@ def test_etp_real_data():
 
             # predict returns samples to wait after the window end, so the
             # absolute trigger index is window start + window length + samples_to_wait
-            triggers.append(window_i + window_len + etp.predict(window_data, 0))
+            triggers.append(window_i + window_len +
+                            etp.predict(window_data, 0))
 
             window_i += window_step
 

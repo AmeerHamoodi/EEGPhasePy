@@ -19,7 +19,7 @@ def test_phastimate_construct():
     ]
 
     phastimate_output = [
-        [TypeError, 'Value must be an int'],
+        [TypeError, 'Value must be an int type'],
         False
     ]
 

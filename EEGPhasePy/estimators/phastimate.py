@@ -127,8 +127,8 @@ class PHASTIMATE(Estimator):
 
             fs = self.sampling_rate
             window_i = 0
-            window_len = self.window_len
-            window_step = int(0.01*fs)
+            window_len = int((self.window_len / 1000) * fs)
+            window_step = int(0.01 * fs)
 
             triggers = []
 
@@ -181,8 +181,8 @@ class PHASTIMATE(Estimator):
 
             fs = self.sampling_rate
             window_i = 0
-            window_len = self.window_len
-            window_step = int(0.05*fs)
+            window_len = int((self.window_len / 1000) * fs)
+            window_step = int(0.05 * fs)
 
             triggers = []
 
