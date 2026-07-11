@@ -53,6 +53,7 @@ class ETP(Estimator):
         super().__init__(real_time_filter, ground_truth_filter,
                          sampling_rate, window_len, window_edge)
         self.tadj: int
+        self.tadj = None
 
     def fit(self, training_data: npt.ArrayLike, min_ipi: int):
         '''
