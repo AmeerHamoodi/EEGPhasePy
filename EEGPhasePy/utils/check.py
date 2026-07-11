@@ -60,8 +60,8 @@ def _check_type(value: any, types: list):
     for i, type_name in enumerate(types):
         if type_name == "array" and _is_array(value):
             break
-        elif type_name == "int" and isinstance(value, int) and not isinstance(value,
-                                                                         bool):
+        elif type_name == "int" and isinstance(value, int) and not \
+                isinstance(value, bool):
             break
         elif type_name == "float" and isinstance(value, float):
             break

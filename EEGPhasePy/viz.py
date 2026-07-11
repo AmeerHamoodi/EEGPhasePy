@@ -121,8 +121,8 @@ def plot_waveform_average(waveforms: npt.ArrayLike,
     ax = fig.add_subplot(111)
     ax.plot(time_data, mean_waveform, color=color, alpha=1)
     if show_std:
-        ax.fill_between(time_data, mean_waveform - waveform_std, mean_waveform +
-                        waveform_std, alpha=0.2, color=_std_color)
+        ax.fill_between(time_data, mean_waveform - waveform_std, mean_waveform
+                        + waveform_std, alpha=0.2, color=_std_color)
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Amplitude (μV)")
 
