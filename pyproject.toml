@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "eegphasepy"
-version = "0.0.6"
+version = "0.0.7"
 authors = [
   { name="Ameer Hamoodi", email="hamoodia@mcmaster.ca" },
   { name="Christian Brodbeck", email="brodbecc@mcmaster.ca"},
