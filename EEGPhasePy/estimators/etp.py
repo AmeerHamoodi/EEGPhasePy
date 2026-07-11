@@ -126,7 +126,7 @@ class ETP(Estimator):
                 if len(peaks) == 0:
                     raise ValueError(
                         "No peaks were found during ETP fitting. This could be"
-                        + "one of: a signal quality issue (try increasing"
+                        + " one of: a signal quality issue (try increasing"
                         + " filter order), window length issue (try increasing"
                         + " the window length)")
 
