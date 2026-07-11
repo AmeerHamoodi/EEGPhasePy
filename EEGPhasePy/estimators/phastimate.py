@@ -89,11 +89,11 @@ class PHASTIMATE(Estimator):
         p = len(ar_params)
         forecast = list(data[-p:])  # start with the last p values
 
-        for _ in range(steps):
-            new_val = np.dot(ar_params, forecast[-p:][::-1])  # weighted sum
-            forecast.append(new_val)
-            np.seterr(invalid='ignore')
-            np.seterr(over='ignore')
+        with np.errstate(invalid='ignore', over='ignore'):
+            for _ in range(steps):
+                # weighted sum
+                new_val = np.dot(ar_params, forecast[-p:][::-1])
+                forecast.append(new_val)
 
         return np.array(forecast[p:])
 
