@@ -55,6 +55,19 @@ class Estimator:
         _check_array_dimensions(real_time_filter, [(1,), (1, 1)])
         _check_array_dimensions(ground_truth_filter, [(1,), (1, 1)])
 
+        # validate edge not 0
+        if int(sampling_rate * (window_edge / 1000)) == 0:
+            raise ValueError(
+                "window_edge is too small for the given sampling rate. " +
+                "Please increase window_edge or decrease sampling_rate")
+
+        # validate 2*edge does not exceed window length
+        if int(sampling_rate * (window_edge / 1000)) * 2 >= \
+                int(sampling_rate * (window_len / 1000)):
+            raise ValueError(
+                "window_edge is too large for the given window_len. " +
+                "Please decrease window_edge or increase window_len")
+
         self.ground_truth_filter: npt.ArrayLike = ground_truth_filter
         self.sampling_rate: int = sampling_rate
 
