@@ -57,15 +57,15 @@ def _check_type(value: any, types: list):
         Type value should match.
     '''
 
-    for i, type in enumerate(types):
-        if type == "array" and _is_array(value):
+    for i, type_name in enumerate(types):
+        if type_name == "array" and _is_array(value):
             break
-        elif type == "int" and isinstance(value, int) and not isinstance(value,
+        elif type_name == "int" and isinstance(value, int) and not isinstance(value,
                                                                          bool):
             break
-        elif type == "float" and isinstance(value, float):
+        elif type_name == "float" and isinstance(value, float):
             break
-        elif type == "bool" and isinstance(value, bool):
+        elif type_name == "bool" and isinstance(value, bool):
             break
         elif i + 1 >= len(types):
             if len(types) == 1:
@@ -76,6 +76,6 @@ def _check_type(value: any, types: list):
                     "bool": "a bool"
                 }
                 raise TypeError("Value must be " +
-                                type_to_message_map[type] + " type")
+                                type_to_message_map[type_name] + " type")
             else:
                 raise TypeError("Value must be one of: " + ' or '.join(types))
