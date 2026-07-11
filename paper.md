@@ -84,7 +84,9 @@ train the phase estimator on resting-state EEG and then use it new recordings by
 contains common metrics and visualizations that allow scientists to test the accuracy of their phase estimation algorithm. As new metrics become
 adopted by the literature, they can be easily added to the `EEGPhasePy` library and become widely accessible as a result of the `Estimator` class.
 We implemented automated tests for each phase estimation algorithm on synthetic EEG data, this ensures the algorithm is performing
-with expected accuracy for that model.
+with expected accuracy for that model. Additionally, we created GitHub actions to automatically test for linting errors using `flake8`, run
+the tests using `PyTest` and build the docs onto `readthedocs`. Our GitHub actions run these tests across multiple Python versions for
+compatibility.
 
 # Research impact statement
 
