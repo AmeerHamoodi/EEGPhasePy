@@ -6,14 +6,16 @@ tags:
   - EEG-TMS
 authors:
   - name: Ameer Hamoodi
-    orcid: 0000-0000-0000-0000
+    orcid: 0009-0006-4375-8104
     affiliation: "1, 2"
   - name: Christian Brodbeeck
+    orcid: 0000-0001-8380-639X
     affiliation: 1
   - name: Mustaali Hussain
-    corresponding: true
+    orcid: 0009-0004-7096-2763
     affiliation: 3
   - name: Aimee Nelson
+    orcid: 0000-0003-1279-0815
     corresponding: true
     affiliation: "1, 3"
 affiliations:
@@ -66,6 +68,10 @@ autoregressive (AR) phase estimation and genetic optimization for AR phase estim
 designed for external contributions. Further, multiple phase estimation algorithms
 lack open-source implementations [@Liu2025].
 
+**Build vs contribute:** We opted to develop a new library rather than contribute to MNE-Python because MNE was not designed
+for use in real-time applications. The `Raw` class is not amenable to sliding window creation, which is necessary for real-time
+EEG processing. The MNE-Python real-time package was discontinued in favor of MNE-LSL and MNE-LSL relies on Lab Streaming Layer (LSL) for communication. However, multiple EEG amplifiers, including our amplifiers in lab, do not use LSL for streaming data. By creating a separate library, we ensure phase estimation can be used across various hardware set ups.
+
 # Software design
 
 `EEGPhasePy` was designed with two goals in mind: 1) ensure the package is easily used by neurophysiologists
@@ -103,8 +109,9 @@ easily integrated.
 
 # AI usage disclosure
 
-No generative AI tools were used in the development of this software, the writing
-of this manuscript, or the preparation of supporting materials.
+Generative AI was used as an additional code reviewer (Claude code and GitHub CoPilot) and did not replace human review of the code or
+human testing of the code. Generative AI made minor contributions to code refactoring and bug fixes (Claude code) as well as in formatting
+documentation. All documentation and code was reviewed thoroughly by the authors.
 
 # Acknowledgements
 
