@@ -50,7 +50,7 @@ def plot_polar_histogram(phase_data: npt.ArrayLike,
     bin_size = bin_width
     a, b = np.histogram(degrees_full_circle,
                         bins=np.arange(0, 360+bin_size, bin_size))
-    centers = np.deg2rad(np.ediff1d(b)//2 + b[:-1])
+    centers = np.deg2rad(np.ediff1d(b) / 2 + b[:-1])
 
     ax = fig.add_subplot(111, projection='polar')
     ax.bar(centers, a, width=np.deg2rad(bin_size), bottom=0.0, alpha=0.8,
