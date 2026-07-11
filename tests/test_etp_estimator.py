@@ -62,7 +62,7 @@ def test_etp_fit():
     # should fail if training_data not arr
 
     etp_fit_parameters = [
-        [np.sin(78.5*np.arange(0, 200, 1/2048)), 63],  # pass
+        [np.sin(78.5*np.arange(0, 500, 1/2048)), 63],  # pass
         [1, 63],  # fail
         [np.zeros((100, 2)), 63],  # fail
         [np.zeros(100), 62.5]  # fail
