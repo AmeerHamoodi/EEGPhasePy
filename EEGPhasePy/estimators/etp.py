@@ -113,8 +113,9 @@ class ETP(Estimator):
 
             triggered_phases = []
 
+            window_step = int(0.35 * fs)
             for i in range(255):
-                window_i = 90*fs + 350*i
+                window_i = 90 * fs + window_step * i
                 window_data = training_data[window_i:window_i + window_len]
                 filtered_window = self._filter_data(
                     self.real_time_filter,
