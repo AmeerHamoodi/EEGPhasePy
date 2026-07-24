@@ -320,8 +320,12 @@ class Estimator:
         waveforms = self.get_waveforms_from_triggers(
             data, triggers, tmin, tmax)
 
-        # Need to find t_trigger
-        t_trigger = len(waveforms[0]) - (int(fs * tmin))
+        if len(waveforms) == 0:
+            raise ValueError(
+                "No waveforms could be extracted for the provided triggers and time window")
+
+        # t_trigger is the sample index (within each extracted segment) that corresponds to t=0
+        t_trigger = int(fs * tmin)
 
         return plot_waveform_average(waveforms, fs, t_trigger)
 
