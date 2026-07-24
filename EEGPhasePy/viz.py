@@ -111,9 +111,7 @@ def plot_waveform_average(waveforms: npt.ArrayLike,
     mean_waveform = np.mean(waveform_data, axis=0)
     waveform_std = np.std(waveform_data, axis=0)
 
-    time_start = (len(mean_waveform) - t_trigger) / fs
-    time_end = (len(mean_waveform) - fs*time_start) / fs
-    time_data = np.arange(-time_start, time_end, 1/fs)
+    time_data = (np.arange(len(mean_waveform)) - t_trigger) / fs
 
     _std_color = std_color if std_color is not None else color
 
