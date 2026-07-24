@@ -94,9 +94,9 @@ def test_etp_predict():
     # Test if predict fails when given non-float target_phase
 
     etp_predict_parameters = [
-        [np.sin(78.5*np.arange(0, 0.5, 1/2048)), 1.96],
-        [15, 1.96],
-        [np.zeros((500, 2)), 1.96],
+        [np.sin(78.5*np.arange(0, 0.5, 1/2048)), 0],
+        [15, 0],
+        [np.zeros((500, 2)), 0],
         [np.sin(78.5*np.arange(0, 0.5, 1/2048)), "string"]
     ]
 
@@ -121,6 +121,7 @@ def test_etp_predict():
             # predict returns the number of samples to wait after the end of the
             # window before delivering a stimulus
             assert isinstance(samples_to_wait, np.int64)
+            assert 0 <= samples_to_wait <= etp.tadj
 
 
 def test_etp_real_data():
