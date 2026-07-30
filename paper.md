@@ -7,8 +7,9 @@ tags:
 authors:
   - name: Ameer Hamoodi
     orcid: 0009-0006-4375-8104
+    corresponding: true
     affiliation: "1, 2"
-  - name: Christian Brodbeeck
+  - name: Christian Brodbeck
     orcid: 0000-0001-8380-639X
     affiliation: 1
   - name: Mustaali Hussain
@@ -16,7 +17,6 @@ authors:
     affiliation: 3
   - name: Aimee Nelson
     orcid: 0000-0003-1279-0815
-    corresponding: true
     affiliation: "1, 3"
 affiliations:
   - name: School of Biomedical Engineering, McMaster University, Hamilton, ON, Canada

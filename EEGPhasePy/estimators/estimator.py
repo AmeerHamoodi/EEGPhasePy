@@ -322,9 +322,11 @@ class Estimator:
 
         if len(waveforms) == 0:
             raise ValueError(
-                "No waveforms could be extracted for the provided triggers and time window")
+                "No waveforms could be extracted for the provided triggers " +
+                "and time window")
 
-        # t_trigger is the sample index (within each extracted segment) that corresponds to t=0
+        # t_trigger is the sample index (within each extracted segment) that
+        # corresponds to t=0
         t_trigger = int(fs * tmin)
 
         return plot_waveform_average(waveforms, fs, t_trigger)
