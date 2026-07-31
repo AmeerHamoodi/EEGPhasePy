@@ -54,6 +54,8 @@ class ETP(Estimator):
                          sampling_rate, window_len, window_edge)
         self.tadj: int
         self.tadj = None
+        self.period: int
+        self.period = None
 
     def fit(self, training_data: npt.ArrayLike, min_ipi: int):
         '''
@@ -99,8 +101,7 @@ class ETP(Estimator):
 
         bias = 0
         bias_direction = None
-        last_mean = None
-        mean_differences = []
+        target_distances = []
 
         window_len = int((self.window_len / 1000) * fs)
         window_edge = int((self.window_edge / 1000) * fs)
@@ -142,16 +143,15 @@ class ETP(Estimator):
                 bias_direction = 1 if np.rad2deg(
                     mean_phase) % 360 > 180 else -1
 
-            if last_mean is not None:
-                difference_mean = 1 - \
-                    np.real(np.exp(1j*last_mean - 1j*mean_phase))
-                if len(mean_differences) > 0 and \
-                        mean_differences[-1] < difference_mean:
-                    self.tadj = period + bias - bias_direction
-                    return self
+            distance_to_target = 1 - np.cos(mean_phase)
 
-                mean_differences.append(difference_mean)
-            last_mean = mean_phase
+            if len(target_distances) > 0 and \
+                    target_distances[-1] < distance_to_target:
+                self.tadj = period + bias - bias_direction
+                self.period = period
+                return self
+
+            target_distances.append(distance_to_target)
 
             bias += bias_direction
             n_fitting_iterations += 1
@@ -192,6 +192,8 @@ class ETP(Estimator):
                 "No peaks could be found in the window passed into the \
                     `predict` method")
 
-        tadj: int = int(self.tadj * _target_phase/(2*np.pi))
+        trigger_offset: int = int(
+            self.period * _target_phase / (2 * np.pi)) if _target_phase > 0 \
+            else self.tadj
 
-        return tadj - (len(filtered_window) - peaks[-1])
+        return trigger_offset - (len(filtered_window) - peaks[-1])

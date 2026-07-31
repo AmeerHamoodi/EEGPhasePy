@@ -146,6 +146,7 @@ polar_hist_fig, waveform_fig = run_etp_sim(
 # %%
 openneuro.download(
     dataset='ds004504',
+    tag='1.0.8',
     target_dir='ds004504',
     include=['sub-001']
 )
