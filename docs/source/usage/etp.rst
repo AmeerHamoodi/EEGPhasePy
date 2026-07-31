@@ -1,0 +1,107 @@
+ETP-based phase estimation
+===========================
+
+Background
+------------
+Educated Temporal Prediction (ETP) is a form of phase estimation that uses the time of the latest peak in the current time window and the average
+inter-peak-interval to predict the next time the desired phase will occur at. ETP was first described by :cite:t:`Shirinpour2020-ef`, so please cite
+:cite:t:`Shirinpour2020-ef` when using the :py:class:`EEGPhasePy.estimators.ETP` class of EEGPhasePy.
+
+The primary benefit of ETP over other phase estimation methods is its ability to work in environments with large and uncertain (within limits) 
+delays. This is especially useful considering most EEG amplifiers don't make guarantees about communication delays and the computer running ETP in real-time will likely suffer from
+jitter in scheduling your phase triggered stimulus (e.g. `transcranial electrical stimulation (tES) <https://en.wikipedia.org/wiki/Transcranial_direct-current_stimulation>`_ 
+or `transcranial magnetic stimulation (TMS) <https://en.wikipedia.org/wiki/Transcranial_magnetic_stimulation>`_). ETP allows you to account for these delays while suffering less of an accuracy
+dip compared to other phase estimation algorithms
+
+
+Usage
+---------
+Using ETP is quite simple. We'll start off by importing the ETP class, :mod:`numpy` to simulate EEG data and :mod:`scipy.signal` for filtering.
+
+.. doctest::
+   :hide:
+   :pyversion: == 3.12
+
+.. testsetup:: *
+   import numpy as np
+   import scipy.signal as signal
+
+   from EEGPhasePy.estimators import ETP
+
+.. code-block:: Python
+   :caption: Imports
+
+   import numpy as np
+   import scipy.signal as signal
+
+   from EEGPhasePy.estimators import ETP
+
+Next, we'll create two 200 s long signals simulating the human alpha rhythym (assuming 10 Hz here) and adding in some gaussian noise.
+Our training signal will be used to fit the ETP algorithm and then we will test it on the testing signal.
+
+.. testcode::
+
+   fs = 2000
+   time_data = np.arange(0, 200, 1/fs)
+
+   training_signal_clean = np.sin(2 * np.pi * 10 * time_data)
+   training_signal = training_signal_clean + np.random.normal(0, 2, len(time_data))
+
+   testing_signal_clean = np.sin(2 * np.pi * 10 * time_data)
+   testing_signal = testing_signal_clean + np.random.normal(0, 2, len(time_data))
+
+After our signals have been created, we need to construct our real-time and ground-truth filter. For simplicity, 
+we have assumed that a higher order filter will allow us to effectively obtain ground truth data for most of the signal. 
+The purpose of the ground-truth filter is to obtain the true phase. This filter would be used when training ETP and for 
+computing phase stats (e.g. circular mean and std) based on triggers. The real-time filter is used to filter the raw window
+of EEG data passed into the `predict` method.
+
+.. note:: A note on the "ground truth" filter 
+
+   We use ground-truth here quite loosely. It is very challenging to
+   obtain a true "ground-truth" for EEG phase. If you're interested in understanding
+   more of the nuance associated with this, check out :cite:t:`Zrenner2020-zb`.
+
+.. testcode::
+   
+   rt_filter = signal.firwin(120, [8, 12], fs=fs, pass_zero=False)
+   gt_filter = signal.firwin(300, [8, 12], fs=fs, pass_zero=False)
+
+Next, we will instantiate ETP and fit it to our training data. The `min_ipi` parameter specifies the shortest
+time between peaks the algorithm should expect. This is used to limit the effect phase-slips or phase-resets have
+on fitting ETP.
+
+.. testcode::
+   
+   etp = ETP(rt_filter, gt_filter, fs)
+   etp.fit(training_signal, min_ipi=int(fs * 1/12))
+
+Then, we will run a pseudo-real-time simulation using the testing signal. Here, we use the `predict` method of the `etp`
+object. `predict` returns the **number of samples to wait after the end of the window** before delivering the stimulus.
+In a real-time system this maps directly to a delay: once you have received the current window, simply wait the returned
+number of samples and then fire the stimulus. The ``target_phase`` argument is specified in **degrees**
+(e.g. ``0`` for a peak, ``180`` for a trough, ``270`` for a rising zero-crossing).
+
+.. testcode::
+
+   window_start = 0
+   window_len = int(0.5*fs)
+   window_step = int(0.06*fs) # using a step of 60 ms
+
+   triggers = []
+
+   while window_start + window_len < len(testing_signal):
+       window = testing_signal[window_start:window_start + window_len]
+
+       samples_to_wait = etp.predict(window, 0)
+       trigger_sample = window_start + window_len + samples_to_wait
+       if trigger_sample < len(testing_signal):
+           triggers.append(trigger_sample)
+       window_start += window_step
+
+   polar_hist_fig = etp.polar_histogram_from_triggers(testing_signal, triggers)
+   waveform_fig = etp.plot_mean_std_waveform_from_triggers(testing_signal, triggers, tmin=0.1, tmax=0.1)
+
+ETP-based phase estimation 
+----------
+.. minigallery:: ../examples/etp-*

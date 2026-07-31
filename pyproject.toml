@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools >= 77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eegphasepy"
+version = "0.0.7"
+authors = [
+  { name="Ameer Hamoodi", email="hamoodia@mcmaster.ca" },
+  { name="Christian Brodbeck", email="brodbecc@mcmaster.ca"},
+  { name="Mustaali Hussain", email="hussam55@mcmaster.ca"},
+  { name="Aimee Nelson", email="nelsonaj@mcmaster.ca"}
+]
+description = "A toolkit for EEG phase estimation"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "BSD-3-Clause"
+license-files = ["LICENCE.md"]
+dependencies = [
+  "matplotlib >= 3.8",
+  "numpy >= 1.26,<3",
+  "scipy >= 1.11",
+  "statsmodels >= 0.14",
+  "pygad >= 3.5.0",
+  "bayesian-optimization >= 3.1.0"
+]
+
+[tool.setuptools.packages.find]
+include = ["EEGPhasePy*"]
+
+[project.urls]
+Homepage = "https://github.com/AmeerHamoodi/EEGPhasePy"
+Issues = "https://github.com/AmeerHamoodi/EEGPhasePy/issues"

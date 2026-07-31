@@ -1,0 +1,12 @@
+sphinxcontrib-bibtex
+sphinx-rtd-theme
+nbsphinx
+sphinx-gallery
+matplotlib
+numpy
+scipy
+statsmodels
+pygad
+bayesian-optimization
+openneuro-py>=2026.4.1
+mne

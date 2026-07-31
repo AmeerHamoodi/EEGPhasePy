@@ -1,1 +1,6 @@
-phase-eeg
+__pycache__
+venv
+dist
+EEGPhasePy.egg-info
+eegphasepy.egg-info
+tests/test_data/**
