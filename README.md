@@ -127,10 +127,28 @@ Contributions are welcome. Please open an issue or pull request on [GitHub](http
 
 ## Citation
 
-If you use EEGPhasePy in your research, please cite the underlying algorithm(s) you end up using:
+If you use EEGPhasePy in your research, please cite the package and the underlying algorithm(s) you end up using:
 
 - **ETP**: Shirinpour et al. (2020). _Experimental Evaluation of Methods for Real-Time EEG Phase-Specific Transcranial Magnetic Stimulation_. [PMC8293904](https://pmc.ncbi.nlm.nih.gov/articles/PMC8293904/)
 - **PHASTIMATE**: Zrenner et al. (2020). _The shaky ground truth of real-time phase estimation_. [PMID 29191438](https://pubmed.ncbi.nlm.nih.gov/29191438/)
+
+```bibtex
+@software{hamoodi_2026_21854656,
+  author       = {Hamoodi, Ameer and
+                  Brodbeck, Christian and
+                  Hussain, Mustaali and
+                  Nelson, Aimee},
+  title        = {EEGPhasePy: A toolbox for real-time EEG phase
+                   estimation
+                  },
+  month        = aug,
+  year         = 2026,
+  publisher    = {Zenodo},
+  version      = {0.0.8},
+  doi          = {10.5281/zenodo.21854656},
+  url          = {https://doi.org/10.5281/zenodo.21854656},
+}
+```
 
 ## Licence
 
