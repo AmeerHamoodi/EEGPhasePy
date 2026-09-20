@@ -89,6 +89,7 @@ To quantify how well the desired phase was targetted you can use :py:meth:`~EEGP
 
    usage/guide
    usage/realtime
+   usage/precise_sleep
 
 
 .. toctree::

@@ -24,3 +24,9 @@ Visualization
 ------------------
 .. automodule:: EEGPhasePy.viz
     :members:
+
+
+Timing
+------------------
+.. automodule:: EEGPhasePy.utils.timing
+    :members:
