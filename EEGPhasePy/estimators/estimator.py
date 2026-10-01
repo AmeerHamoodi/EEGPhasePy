@@ -97,6 +97,44 @@ class Estimator:
             if len(np.shape(dsp_filter)) == 1 \
             else signal.filtfilt(dsp_filter[0], dsp_filter[1], data)
 
+    def check_power_threshold(self,
+                              data: npt.ArrayLike,
+                              power_threshold: Union[int, float]) -> bool:
+        '''
+        Check whether the current window has sufficient power in the
+        real-time filter's frequency band.
+
+        Power is calculated as the mean squared filtered amplitude after
+        removing the configured filter-edge samples from both ends. The
+        threshold is therefore expressed in squared input-amplitude units.
+
+        Parameters
+        ----------
+        data : array_like (n_samples,)
+            The unfiltered EEG data in the current window
+        power_threshold : int | float
+            Minimum mean-square power required for the window
+
+        Returns
+        -------
+        meets_threshold : bool
+            Whether the window's power is greater than or equal to the
+            threshold
+        '''
+        _check_type(data, ['array'])
+        _check_type(power_threshold, ['int', 'float'])
+        _check_array_dimensions(data, [(1,)])
+
+        if power_threshold < 0:
+            raise ValueError('power_threshold must be non-negative')
+
+        edge = int((self.window_edge / 1000) * self.sampling_rate)
+        filtered_data = self._filter_data(
+            self.real_time_filter, data)[edge:-edge]
+        power = np.mean(np.square(filtered_data))
+
+        return bool(power >= power_threshold)
+
     def get_phase_from_triggers(self,
                                 data: npt.ArrayLike,
                                 triggers: npt.ArrayLike,
