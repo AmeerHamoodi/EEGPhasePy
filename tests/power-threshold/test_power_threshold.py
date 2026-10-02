@@ -176,8 +176,10 @@ def test_power_threshold_reports_overflow_in_computed_power():
         1, [8, 13], btype='bandpass', fs=500)
     estimator = Estimator(numerator, numerator, 500)
     estimator.real_time_filter = np.array([numerator, denominator])
+    time = np.arange(100) / estimator.sampling_rate
+    window = 1e200 * np.sin(2 * np.pi * 10 * time)
 
     with pytest.raises(
             ValueError,
             match='computed power is non-finite; check the signal scale'):
-        estimator.check_power_threshold(np.full(100, 1e200), 0)
+        estimator.check_power_threshold(window, 0)
