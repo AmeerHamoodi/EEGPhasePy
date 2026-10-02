@@ -13,16 +13,18 @@ Checking a window
 Every estimator inherits
 :py:meth:`~EEGPhasePy.estimators.Estimator.check_power_threshold`. Pass the
 unfiltered EEG window and a minimum power threshold. The method applies the
-estimator's ``real_time_filter``, removes the configured ``window_edge``
-samples from both ends, then compares the mean squared filtered amplitude with
-the threshold. The threshold is inclusive: a window passes when its power is
-greater than or equal to the threshold.
+estimator's ``real_time_filter``, computes the analytic signal with a Hilbert
+transform, and takes its amplitude envelope. It removes the configured
+``window_edge`` samples from both ends, squares the remaining envelope, and
+compares its mean with the threshold. The threshold is inclusive: a window
+passes when its power is greater than or equal to the threshold.
 
-This is mean-square power, not a power spectral density. Its units are the
-square of the input signal's amplitude units (for example, microvolts squared
-when the input is measured in microvolts). The result depends on the selected
-filter, window duration, and acquisition scale, so choose the threshold using
-representative data collected with the same settings.
+This is mean squared Hilbert-envelope amplitude, not a power spectral density.
+Its units are the square of the input signal's amplitude units (for example,
+microvolts squared when the input is measured in microvolts). The result
+depends on the selected filter, window duration, and acquisition scale, so
+choose the threshold using representative data collected with the same
+settings.
 
 .. code-block:: python
 
@@ -55,6 +57,8 @@ cutoff that rejects unsuitable windows without discarding an unacceptable
 proportion of usable data. Reassess the cutoff if acquisition settings or
 preprocessing change.
 
-``power_threshold`` must be a non-negative number. The input window must be a
-one-dimensional array long enough for filtering and edge removal. The method
-returns a boolean and does not alter the estimator's phase prediction state.
+``power_threshold`` must be a finite, non-negative real number. The input
+window must contain finite real numeric samples and be long enough for the
+filter's padding and the configured edge removal. Invalid inputs raise an
+informative ``TypeError`` or ``ValueError``. The method returns a boolean and
+does not alter the estimator's phase prediction state.

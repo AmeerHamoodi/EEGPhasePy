@@ -3,6 +3,7 @@ import numpy.typing as npt
 import scipy.signal as signal
 import scipy.stats as stats
 import matplotlib
+from numbers import Real
 from typing import Union
 
 from ..utils.check import _check_array_dimensions, _check_type
@@ -104,16 +105,17 @@ class Estimator:
         Check whether the current window has sufficient power in the
         real-time filter's frequency band.
 
-        Power is calculated as the mean squared filtered amplitude after
-        removing the configured filter-edge samples from both ends. The
-        threshold is therefore expressed in squared input-amplitude units.
+        Power is calculated by filtering the window, taking the Hilbert
+        amplitude envelope, trimming the configured filter-edge samples from
+        both ends, and averaging the squared envelope. The threshold is
+        therefore expressed in squared input-amplitude units.
 
         Parameters
         ----------
         data : array_like (n_samples,)
             The unfiltered EEG data in the current window
         power_threshold : int | float
-            Minimum mean-square power required for the window
+            Minimum mean-square Hilbert-envelope power required for the window
 
         Returns
         -------
@@ -122,16 +124,87 @@ class Estimator:
             threshold
         '''
         _check_type(data, ['array'])
-        _check_type(power_threshold, ['int', 'float'])
-        _check_array_dimensions(data, [(1,)])
+        if isinstance(power_threshold, bool) or not isinstance(
+                power_threshold, (Real, np.integer, np.floating)):
+            raise TypeError('power_threshold must be a real number')
 
+        try:
+            power_threshold = float(power_threshold)
+        except OverflowError as error:
+            raise ValueError('power_threshold must be finite') from error
+        if not np.isfinite(power_threshold):
+            raise ValueError('power_threshold must be finite')
         if power_threshold < 0:
             raise ValueError('power_threshold must be non-negative')
 
+        try:
+            window = np.asarray(data)
+        except (TypeError, ValueError) as error:
+            raise ValueError('data must be a rectangular numeric array') \
+                from error
+
+        _check_array_dimensions(window, [(1,)])
+        if not np.issubdtype(window.dtype, np.number) or \
+                np.issubdtype(window.dtype, np.complexfloating):
+            raise TypeError('data must contain real numeric samples')
+        if not np.all(np.isfinite(window)):
+            raise ValueError('data must contain only finite samples')
+
         edge = int((self.window_edge / 1000) * self.sampling_rate)
-        filtered_data = self._filter_data(
-            self.real_time_filter, data)[edge:-edge]
-        power = np.mean(np.square(filtered_data))
+        try:
+            filter_coefficients = np.asarray(self.real_time_filter)
+        except (TypeError, ValueError) as error:
+            raise ValueError(
+                'real_time_filter must be a 1D numerator or a 2-row '
+                '(numerator, denominator) array') from error
+        if filter_coefficients.ndim == 1:
+            numerator_length = len(filter_coefficients)
+            denominator_length = 1
+        elif filter_coefficients.ndim == 2 and \
+                filter_coefficients.shape[0] == 2:
+            numerator_length, denominator_length = map(
+                len, filter_coefficients)
+        else:
+            raise ValueError(
+                'real_time_filter must be a 1D numerator or a 2-row '
+                '(numerator, denominator) array')
+        if numerator_length == 0 or denominator_length == 0:
+            raise ValueError('real_time_filter coefficients cannot be empty')
+        if not np.issubdtype(filter_coefficients.dtype, np.number) or \
+                np.issubdtype(filter_coefficients.dtype, np.complexfloating):
+            raise TypeError('real_time_filter coefficients must be real numbers')
+        if not np.all(np.isfinite(filter_coefficients)):
+            raise ValueError(
+                'real_time_filter coefficients must be finite')
+
+        filter_length = max(numerator_length, denominator_length)
+        pad_length = 3 * filter_length
+        minimum_window_length = max(pad_length + 1, 2 * edge + 1)
+        if len(window) < minimum_window_length:
+            raise ValueError(
+                'data window is too short: expected at least '
+                f'{minimum_window_length} samples for filtering and edge '
+                f'removal, got {len(window)}')
+
+        try:
+            filtered_data = self._filter_data(
+                self.real_time_filter, window)
+        except (TypeError, ValueError) as error:
+            raise ValueError(
+                'real_time_filter could not filter the data window: '
+                f'{error}') from error
+
+        analytic_signal = signal.hilbert(filtered_data)
+        envelope = np.abs(analytic_signal)[edge:-edge]
+        if not np.all(np.isfinite(envelope)):
+            raise ValueError(
+                'real_time_filter produced non-finite values for this window')
+        with np.errstate(over='ignore', invalid='ignore'):
+            power = np.mean(np.square(envelope))
+        if not np.isfinite(power):
+            raise ValueError(
+                'computed power is non-finite; check the signal scale and '
+                'filter coefficients')
 
         return bool(power >= power_threshold)
 
