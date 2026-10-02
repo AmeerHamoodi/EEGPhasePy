@@ -170,9 +170,13 @@ class Estimator:
                 '(numerator, denominator) array')
         if numerator_length == 0 or denominator_length == 0:
             raise ValueError('real_time_filter coefficients cannot be empty')
-        if not np.issubdtype(filter_coefficients.dtype, np.number) or \
-                np.issubdtype(filter_coefficients.dtype, np.complexfloating):
-            raise TypeError('real_time_filter coefficients must be real numbers')
+        coefficients_are_numeric = np.issubdtype(
+            filter_coefficients.dtype, np.number)
+        coefficients_are_complex = np.issubdtype(
+            filter_coefficients.dtype, np.complexfloating)
+        if not coefficients_are_numeric or coefficients_are_complex:
+            raise TypeError(
+                'real_time_filter coefficients must be real numbers')
         if not np.all(np.isfinite(filter_coefficients)):
             raise ValueError(
                 'real_time_filter coefficients must be finite')
