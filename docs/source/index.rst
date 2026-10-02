@@ -93,11 +93,12 @@ To quantify how well the desired phase was targetted you can use :py:meth:`~EEGP
 
 
 .. toctree::
-   :caption: Models
+   :caption: Estimators
    :maxdepth: 3
 
    usage/etp
    usage/ar
+   usage/power_threshold
 
 
 .. toctree::
