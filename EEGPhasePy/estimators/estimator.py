@@ -3,10 +3,15 @@ import numpy.typing as npt
 import scipy.signal as signal
 import scipy.stats as stats
 import matplotlib
-from numbers import Real
 from typing import Union
 
-from ..utils.check import _check_array_dimensions, _check_type
+from ..utils.check import (
+    _check_array_dimensions,
+    _check_filter_coefficients,
+    _check_real_array,
+    _check_real_number,
+    _check_type,
+)
 from ..viz import plot_polar_histogram, plot_waveform_average
 
 
@@ -124,62 +129,15 @@ class Estimator:
             threshold
         '''
         _check_type(data, ['array'])
-        if isinstance(power_threshold, bool) or not isinstance(
-                power_threshold, (Real, np.integer, np.floating)):
-            raise TypeError('power_threshold must be a real number')
-
-        try:
-            power_threshold = float(power_threshold)
-        except OverflowError as error:
-            raise ValueError('power_threshold must be finite') from error
-        if not np.isfinite(power_threshold):
-            raise ValueError('power_threshold must be finite')
-        if power_threshold < 0:
-            raise ValueError('power_threshold must be non-negative')
-
-        try:
-            window = np.asarray(data)
-        except (TypeError, ValueError) as error:
-            raise ValueError('data must be a rectangular numeric array') \
-                from error
-
+        power_threshold = _check_real_number(
+            power_threshold, 'power_threshold', non_negative=True)
+        window = _check_real_array(data, 'data', contents='samples')
         _check_array_dimensions(window, [(1,)])
-        if not np.issubdtype(window.dtype, np.number) or \
-                np.issubdtype(window.dtype, np.complexfloating):
-            raise TypeError('data must contain real numeric samples')
-        if not np.all(np.isfinite(window)):
-            raise ValueError('data must contain only finite samples')
 
         edge = int((self.window_edge / 1000) * self.sampling_rate)
-        try:
-            filter_coefficients = np.asarray(self.real_time_filter)
-        except (TypeError, ValueError) as error:
-            raise ValueError(
-                'real_time_filter must be a 1D numerator or a 2-row '
-                '(numerator, denominator) array') from error
-        if filter_coefficients.ndim == 1:
-            numerator_length = len(filter_coefficients)
-            denominator_length = 1
-        elif filter_coefficients.ndim == 2 and \
-                filter_coefficients.shape[0] == 2:
-            numerator_length, denominator_length = map(
-                len, filter_coefficients)
-        else:
-            raise ValueError(
-                'real_time_filter must be a 1D numerator or a 2-row '
-                '(numerator, denominator) array')
-        if numerator_length == 0 or denominator_length == 0:
-            raise ValueError('real_time_filter coefficients cannot be empty')
-        coefficients_are_numeric = np.issubdtype(
-            filter_coefficients.dtype, np.number)
-        coefficients_are_complex = np.issubdtype(
-            filter_coefficients.dtype, np.complexfloating)
-        if not coefficients_are_numeric or coefficients_are_complex:
-            raise TypeError(
-                'real_time_filter coefficients must be real numbers')
-        if not np.all(np.isfinite(filter_coefficients)):
-            raise ValueError(
-                'real_time_filter coefficients must be finite')
+        (_, numerator_length,
+         denominator_length) = _check_filter_coefficients(
+            self.real_time_filter)
 
         filter_length = max(numerator_length, denominator_length)
         pad_length = 3 * filter_length

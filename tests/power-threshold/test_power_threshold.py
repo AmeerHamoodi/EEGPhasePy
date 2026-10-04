@@ -155,7 +155,7 @@ def test_power_threshold_rejects_non_finite_filter_coefficients():
 
     with pytest.raises(
             ValueError,
-            match='real_time_filter coefficients must be finite'):
+            match='real_time_filter must contain only finite coefficients'):
         estimator.check_power_threshold(np.zeros(100), 0)
 
 
