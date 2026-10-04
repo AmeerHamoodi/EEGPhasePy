@@ -5,7 +5,13 @@ import scipy.stats as stats
 import matplotlib
 from typing import Union
 
-from ..utils.check import _check_array_dimensions, _check_type
+from ..utils.check import (
+    _check_array_dimensions,
+    _check_filter_coefficients,
+    _check_real_array,
+    _check_real_number,
+    _check_type,
+)
 from ..viz import plot_polar_histogram, plot_waveform_average
 
 
@@ -96,6 +102,73 @@ class Estimator:
         return signal.filtfilt(dsp_filter, 1.0, data) \
             if len(np.shape(dsp_filter)) == 1 \
             else signal.filtfilt(dsp_filter[0], dsp_filter[1], data)
+
+    def check_power_threshold(self,
+                              data: npt.ArrayLike,
+                              power_threshold: Union[int, float]) -> bool:
+        '''
+        Check whether the current window has sufficient power in the
+        real-time filter's frequency band.
+
+        Power is calculated by filtering the window, taking the Hilbert
+        amplitude envelope, trimming the configured filter-edge samples from
+        both ends, and averaging the squared envelope. The threshold is
+        therefore expressed in squared input-amplitude units.
+
+        Parameters
+        ----------
+        data : array_like (n_samples,)
+            The unfiltered EEG data in the current window
+        power_threshold : int | float
+            Minimum mean-square Hilbert-envelope power required for the window
+
+        Returns
+        -------
+        meets_threshold : bool
+            Whether the window's power is greater than or equal to the
+            threshold
+        '''
+        _check_type(data, ['array'])
+        power_threshold = _check_real_number(
+            power_threshold, 'power_threshold', non_negative=True)
+        window = _check_real_array(data, 'data', contents='samples')
+        _check_array_dimensions(window, [(1,)])
+
+        edge = int((self.window_edge / 1000) * self.sampling_rate)
+        (_, numerator_length,
+         denominator_length) = _check_filter_coefficients(
+            self.real_time_filter)
+
+        filter_length = max(numerator_length, denominator_length)
+        pad_length = 3 * filter_length
+        minimum_window_length = max(pad_length + 1, 2 * edge + 1)
+        if len(window) < minimum_window_length:
+            raise ValueError(
+                'data window is too short: expected at least '
+                f'{minimum_window_length} samples for filtering and edge '
+                f'removal, got {len(window)}')
+
+        try:
+            filtered_data = self._filter_data(
+                self.real_time_filter, window)
+        except (TypeError, ValueError) as error:
+            raise ValueError(
+                'real_time_filter could not filter the data window: '
+                f'{error}') from error
+
+        analytic_signal = signal.hilbert(filtered_data)
+        envelope = np.abs(analytic_signal)[edge:-edge]
+        if not np.all(np.isfinite(envelope)):
+            raise ValueError(
+                'real_time_filter produced non-finite values for this window')
+        with np.errstate(over='ignore', invalid='ignore'):
+            power = np.mean(np.square(envelope))
+        if not np.isfinite(power):
+            raise ValueError(
+                'computed power is non-finite; check the signal scale and '
+                'filter coefficients')
+
+        return bool(power >= power_threshold)
 
     def get_phase_from_triggers(self,
                                 data: npt.ArrayLike,

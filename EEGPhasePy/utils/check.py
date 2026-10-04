@@ -1,4 +1,5 @@
 import numpy as np
+from numbers import Real
 
 
 def _is_array(value):
@@ -79,3 +80,98 @@ def _check_type(value: any, types: list):
                                 type_to_message_map[type_name] + " type")
             else:
                 raise TypeError("Value must be one of: " + ' or '.join(types))
+
+
+def _check_real_number(value, name, non_negative=False):
+    '''
+    Validate and convert a finite real-valued scalar.
+
+    Parameters
+    ----------
+    value : int | float
+        Value to validate
+    name : str
+        Name used in validation error messages
+    non_negative : bool
+        Whether to require the value to be greater than or equal to zero
+
+    Returns
+    -------
+    float
+        The validated value converted to a Python float
+    '''
+    if isinstance(value, (bool, np.bool_)) or not isinstance(
+            value, (Real, np.integer, np.floating)):
+        raise TypeError(f'{name} must be a real number')
+
+    try:
+        value = float(value)
+    except OverflowError as error:
+        raise ValueError(f'{name} must be finite') from error
+
+    if not np.isfinite(value):
+        raise ValueError(f'{name} must be finite')
+    if non_negative and value < 0:
+        raise ValueError(f'{name} must be non-negative')
+
+    return value
+
+
+def _check_real_array(value, name, contents='values'):
+    '''
+    Convert an array-like value and require finite real numeric elements.
+
+    Parameters
+    ----------
+    value : array_like
+        Array-like value to validate
+    name : str
+        Name used in validation error messages
+    contents : str
+        Description of the array elements for validation messages
+
+    Returns
+    -------
+    numpy.ndarray
+        The validated array
+    '''
+    try:
+        array = np.asarray(value)
+    except (TypeError, ValueError) as error:
+        raise ValueError(
+            f'{name} must be a rectangular numeric array') from error
+
+    if not np.issubdtype(array.dtype, np.number) or \
+            np.issubdtype(array.dtype, np.complexfloating):
+        raise TypeError(
+            f'{name} must contain real numeric {contents}')
+    if not np.all(np.isfinite(array)):
+        raise ValueError(f'{name} must contain only finite {contents}')
+
+    return array
+
+
+def _check_filter_coefficients(value, name='real_time_filter'):
+    '''
+    Validate FIR or (numerator, denominator) filter coefficients.
+
+    Returns
+    -------
+    tuple
+        The coefficient array, numerator length, and denominator length
+    '''
+    coefficients = _check_real_array(value, name, contents='coefficients')
+    if coefficients.ndim == 1:
+        numerator_length = len(coefficients)
+        denominator_length = 1
+    elif coefficients.ndim == 2 and coefficients.shape[0] == 2:
+        numerator_length, denominator_length = map(len, coefficients)
+    else:
+        raise ValueError(
+            f'{name} must be a 1D numerator or a 2-row '
+            '(numerator, denominator) array')
+
+    if numerator_length == 0 or denominator_length == 0:
+        raise ValueError(f'{name} coefficients cannot be empty')
+
+    return coefficients, numerator_length, denominator_length
