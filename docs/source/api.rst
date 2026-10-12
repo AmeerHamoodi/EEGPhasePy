@@ -19,6 +19,10 @@ Estimators
     :members:
     :inherited-members:
 
+.. autoclass:: EEGPhasePy.estimators.EPN
+    :members:
+    :inherited-members:
+
 
 Visualization
 ------------------
