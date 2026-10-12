@@ -8,12 +8,13 @@
 
 A toolkit for developing and analyzing real-time and pseudo-real-time EEG phase estimation.
 
-EEGPhasePy includes implementations of various EEG phase estimation algorithms — including Educated Temporal Prediction (ETP) and PHASTIMATE (autoregressive) — alongside offline analysis helpers for evaluating phase estimation experiments. For background on EEG phase estimation and its applications, see [Zrenner & Ziemann (2024)](https://pmc.ncbi.nlm.nih.gov/articles/PMC10881194/). More phase estimators will continue to be added in the future.
+EEGPhasePy includes implementations of various EEG phase estimation algorithms — including Educated Temporal Prediction (ETP), PHASTIMATE (autoregressive) and the EEG Phase Prediction Network (EPN) — alongside offline analysis helpers for evaluating phase estimation experiments. For background on EEG phase estimation and its applications, see [Zrenner & Ziemann (2024)](https://pmc.ncbi.nlm.nih.gov/articles/PMC10881194/). More phase estimators will continue to be added in the future.
 
 ## Features
 
 - **ETP** — Educated Temporal Prediction ([Shirinpour et al., 2020](https://pmc.ncbi.nlm.nih.gov/articles/PMC8293904/)): uses average interpeak-interval to determine time to next target phase. Similar accuracy to AR with the added benefit of working well with amplifiers that have low packet send rates.
 - **PHASTIMATE** — Autoregressive phase estimator ([Zrenner et al., 2020](https://pubmed.ncbi.nlm.nih.gov/29191438/)): uses an AR model to compensate for filter edge effects and extracts instantaneous phase via the Hilbert transform. Estimates ongoing phase rather than predicting.
+- **EPN** — EEG Phase Prediction Network ([Liu et al., 2025](https://pmc.ncbi.nlm.nih.gov/articles/PMC11876478/)): a small neural network trained on each participant's resting-state EEG that maps a raw EEG window directly to the current phase. Implemented in NumPy, so no deep learning framework is required.
 - **Parameter optimization** — Bayesian and genetic optimization (via `bayesian-optimization` and `PyGAD`) over AR order and window edge for PHASTIMATE. Improve accuracy of the AR model on a participant-by-participant basis.
 - **Visualization** — Polar phase histograms and average ± std pre/post-trigger waveforms via `matplotlib`.
 - Supports Python 3.9–3.13.
@@ -27,7 +28,7 @@ Full documentation including API reference, usage guides, and examples is availa
 | Section        | Pages                                                                                                                                                                                                                                                                               |
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Guide**      | [What is EEG phase estimation?](https://eegphasepy.readthedocs.io/en/latest/usage/guide.html) · [Real-time phase estimation](https://eegphasepy.readthedocs.io/en/latest/usage/realtime.html)                                                                                       |
-| **Models**     | [ETP-based phase estimation](https://eegphasepy.readthedocs.io/en/latest/usage/etp.html) · [Autoregressive phase estimation](https://eegphasepy.readthedocs.io/en/latest/usage/ar.html)                                                                                             |
+| **Models**     | [ETP-based phase estimation](https://eegphasepy.readthedocs.io/en/latest/usage/etp.html) · [Autoregressive phase estimation](https://eegphasepy.readthedocs.io/en/latest/usage/ar.html) · [EPN-based phase estimation](https://eegphasepy.readthedocs.io/en/latest/usage/epn.html) |
 | **Optimizing** | [Bayesian optimization of PHASTIMATE](https://eegphasepy.readthedocs.io/en/latest/usage/bayesian_optimization.html) · [Genetic optimization of PHASTIMATE](https://eegphasepy.readthedocs.io/en/latest/usage/genetic_optimization.html)                                             |
 | **Analysis**   | [Waveform plots](https://eegphasepy.readthedocs.io/en/latest/usage/waveform_plots.html) · [Polar histograms](https://eegphasepy.readthedocs.io/en/latest/usage/polar_histograms.html) · [Phase estimation statistics](https://eegphasepy.readthedocs.io/en/latest/usage/stats.html) |
 | **Examples**   | [Gallery](https://eegphasepy.readthedocs.io/en/latest/gallery_examples/index.html)                                                                                                                                                                                                  |
@@ -131,6 +132,7 @@ If you use EEGPhasePy in your research, please cite the package and the underlyi
 
 - **ETP**: Shirinpour et al. (2020). _Experimental Evaluation of Methods for Real-Time EEG Phase-Specific Transcranial Magnetic Stimulation_. [PMC8293904](https://pmc.ncbi.nlm.nih.gov/articles/PMC8293904/)
 - **PHASTIMATE**: Zrenner et al. (2020). _The shaky ground truth of real-time phase estimation_. [PMID 29191438](https://pubmed.ncbi.nlm.nih.gov/29191438/)
+- **EPN**: Liu et al. (2025). _A Novel Real-time Phase Prediction Network in EEG Rhythm_. Neuroscience Bulletin, 41(3), 391–405. [doi:10.1007/s12264-024-01321-z](https://doi.org/10.1007/s12264-024-01321-z)
 
 ```bibtex
 @software{hamoodi_2026_21854656,

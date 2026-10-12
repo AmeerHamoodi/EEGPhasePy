@@ -98,6 +98,7 @@ To quantify how well the desired phase was targetted you can use :py:meth:`~EEGP
 
    usage/etp
    usage/ar
+   usage/epn
    usage/power_threshold
 
 

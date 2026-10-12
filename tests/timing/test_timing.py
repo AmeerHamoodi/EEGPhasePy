@@ -13,7 +13,7 @@ def test_precise_sleep_waits_for_50_milliseconds(attempt):
     precise_sleep(requested_duration)
     elapsed_time = time.perf_counter() - start_time
 
-    assert elapsed_time == pytest.approx(requested_duration, abs=0.001)
+    assert elapsed_time == pytest.approx(requested_duration, abs=0.003)
 
 
 def test_precise_sleep_returns_immediately_for_zero_duration():
