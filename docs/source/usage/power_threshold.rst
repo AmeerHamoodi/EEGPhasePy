@@ -62,3 +62,13 @@ window must contain finite real numeric samples and be long enough for the
 filter's padding and the configured edge removal. Invalid inputs raise an
 informative ``TypeError`` or ``ValueError``. The method returns a boolean and
 does not alter the estimator's phase prediction state.
+
+Practical guide
+---------------
+
+The gallery example below walks through estimating a cutoff from training
+windows in a real resting-state EEG recording, applying it to held-out windows,
+and comparing phase-estimation results with and without the power gate. Its
+cutoff is an illustrative percentile, not a universal value.
+
+.. minigallery:: ../examples/power-threshold-*
