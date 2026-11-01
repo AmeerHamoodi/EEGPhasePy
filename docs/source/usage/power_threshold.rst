@@ -20,9 +20,9 @@ compares its mean with the threshold. The threshold is inclusive: a window
 passes when its power is greater than or equal to the threshold.
 
 This is mean squared Hilbert-envelope amplitude, not a power spectral density.
-Input EEG samples must be in volts; the method converts the envelope to
-microvolts before calculating power. Both the returned power and the
-``power_threshold`` argument are therefore in microvolts squared. The result
+Input EEG samples must be in microvolts. Convert data from volts (as returned
+by MNE) to microvolts before calling the method. Both the returned power and
+the ``power_threshold`` argument are in microvolts squared. The result
 depends on the selected filter and window duration, so choose the threshold
 using representative data collected with the same settings.
 
@@ -42,6 +42,7 @@ required in microvolts squared and the method returns a boolean.
    gt_filter = signal.firwin(300, [8, 12], fs=fs, pass_zero=False)
    etp = ETP(rt_filter, gt_filter, fs)
 
+   # Convert volt-valued data to microvolts once when loading it, if needed.
    # Set this from representative data in microvolts squared.
    minimum_power = 4.0
    window = np.asarray(current_eeg_window)
@@ -74,7 +75,7 @@ preprocessing change.
 
 When comparing against a cutoff, ``power_threshold`` must be a finite,
 non-negative real number in microvolts squared. The input window must contain
-finite real numeric samples in volts and be long enough for the filter's
+finite real numeric samples in microvolts and be long enough for the filter's
 padding and the configured edge removal. Invalid inputs raise an informative
 ``TypeError`` or ``ValueError``. Neither mode alters the estimator's phase
 prediction state.

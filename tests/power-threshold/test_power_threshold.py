@@ -28,12 +28,12 @@ def test_power_threshold_matches_bandpass_hilbert_pipeline(
         estimator_and_coefficients, frequency, amplitude):
     estimator, numerator, denominator = estimator_and_coefficients
     time = np.arange(0, 2, 1 / estimator.sampling_rate)
-    window = amplitude * 1e-6 * np.sin(2 * np.pi * frequency * time)
+    window = amplitude * np.sin(2 * np.pi * frequency * time)
 
     filtered = signal.filtfilt(numerator, denominator, window)
     edge = int(estimator.window_edge * estimator.sampling_rate / 1000)
     envelope = np.abs(signal.hilbert(filtered))[edge:-edge]
-    expected_power = np.mean(envelope ** 2) * 1e12
+    expected_power = np.mean(envelope ** 2)
     measured_power = estimator.check_power_threshold(
         window, return_power=True)
 
@@ -52,17 +52,28 @@ def test_power_threshold_can_return_computed_power(
         estimator_and_coefficients):
     estimator, numerator, denominator = estimator_and_coefficients
     time = np.arange(0, 2, 1 / estimator.sampling_rate)
-    window = 2e-6 * np.sin(2 * np.pi * 10 * time)
+    window = 2 * np.sin(2 * np.pi * 10 * time)
 
     filtered = signal.filtfilt(numerator, denominator, window)
     edge = int(estimator.window_edge * estimator.sampling_rate / 1000)
     envelope = np.abs(signal.hilbert(filtered))[edge:-edge]
-    expected_power = np.mean(envelope ** 2) * 1e12
+    expected_power = np.mean(envelope ** 2)
 
     power = estimator.check_power_threshold(window, return_power=True)
 
     assert isinstance(power, float)
     assert power == pytest.approx(expected_power)
+
+
+def test_power_threshold_uses_microvolt_squared_cutoff(
+        estimator_and_coefficients):
+    estimator, _, _ = estimator_and_coefficients
+    time = np.arange(0, 2, 1 / estimator.sampling_rate)
+    strong_alpha = 2 * np.sin(2 * np.pi * 10 * time)
+
+    assert estimator.check_power_threshold(strong_alpha, 1.0) is True
+    assert estimator.check_power_threshold(
+        0.1 * strong_alpha, 1.0) is False
 
 
 def test_power_threshold_requires_threshold_in_comparison_mode(
@@ -90,7 +101,7 @@ def test_power_threshold_scales_with_amplitude_squared(
         estimator_and_coefficients):
     estimator, _, _ = estimator_and_coefficients
     time = np.arange(0, 2, 1 / estimator.sampling_rate)
-    base_window = 1e-6 * np.sin(2 * np.pi * 10 * time)
+    base_window = np.sin(2 * np.pi * 10 * time)
 
     assert estimator.check_power_threshold(
         2 * base_window, return_power=True) == pytest.approx(

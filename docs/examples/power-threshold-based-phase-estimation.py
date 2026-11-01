@@ -50,7 +50,7 @@ raw_rs = mne.io.read_raw_eeglab(
 
 fs_rs = int(raw_rs.info['sfreq'])
 raw_rs.pick_channels(['O1'])
-rs_signal = raw_rs.get_data()[0]
+rs_signal = raw_rs.get_data()[0] * 1e6
 
 
 # %% [markdown]
@@ -78,8 +78,9 @@ window_step_rs = int(0.5 * fs_rs)
 # ``check_power_threshold`` can return the measured power directly. It
 # calculates mean squared Hilbert-envelope amplitude after applying the
 # real-time filter and removing its edge samples. This is a signal-power
-# measure, not a power spectral density. MNE returns EEG in volts, so the
-# method returns power in microvolts squared, and cutoffs use those same units.
+# measure, not a power spectral density. MNE returns EEG in volts, so we
+# converted the samples to microvolts after loading them. The method returns
+# power in microvolts squared, and cutoffs use those same units.
 
 
 calibration_powers = []

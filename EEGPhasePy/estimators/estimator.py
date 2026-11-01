@@ -117,9 +117,9 @@ class Estimator:
 
         Power is calculated by filtering the window, taking the Hilbert
         amplitude envelope, trimming the configured filter-edge samples from
-        both ends, converting volts to microvolts, and averaging the squared
-        envelope. Input data must be expressed in volts. Thresholds and
-        returned power are expressed in microvolts squared.
+        both ends and averaging the squared envelope. Input data must be
+        expressed in microvolts. Thresholds and returned power are expressed
+        in microvolts squared.
 
         Parameters
         ----------
@@ -182,7 +182,7 @@ class Estimator:
             raise ValueError(
                 'real_time_filter produced non-finite values for this window')
         with np.errstate(over='ignore', invalid='ignore'):
-            power = np.mean(np.square(envelope * 1e6))
+            power = np.mean(np.square(envelope))
         if not np.isfinite(power):
             raise ValueError(
                 'computed power is non-finite; check the signal scale and '
