@@ -105,10 +105,15 @@ class Estimator:
 
     def check_power_threshold(self,
                               data: npt.ArrayLike,
-                              power_threshold: Union[int, float]) -> bool:
+                              power_threshold: Union[
+                                  int, float, np.integer, np.floating, None
+                              ] = None,
+                              *,
+                              return_power: bool = False) \
+            -> Union[bool, float]:
         '''
         Check whether the current window has sufficient power in the
-        real-time filter's frequency band.
+        real-time filter's frequency band, or return its measured power.
 
         Power is calculated by filtering the window, taking the Hilbert
         amplitude envelope, trimming the configured filter-edge samples from
@@ -119,18 +124,32 @@ class Estimator:
         ----------
         data : array_like (n_samples,)
             The unfiltered EEG data in the current window
-        power_threshold : int | float
-            Minimum mean-square Hilbert-envelope power required for the window
+        power_threshold : int | float | numpy.integer | numpy.floating | None
+            Minimum mean-square Hilbert-envelope power required for the window.
+            Required unless ``return_power`` is True.
+        return_power : bool
+            If True, return the computed power instead of comparing it with
+            ``power_threshold``. In this mode, ``power_threshold`` must be
+            None.
 
         Returns
         -------
-        meets_threshold : bool
-            Whether the window's power is greater than or equal to the
-            threshold
+        result : bool | float
+            The comparison result, or the computed power when
+            ``return_power`` is True
         '''
         _check_type(data, ['array'])
-        power_threshold = _check_real_number(
-            power_threshold, 'power_threshold', non_negative=True)
+        _check_type(return_power, ['bool'])
+        if return_power:
+            if power_threshold is not None:
+                raise ValueError(
+                    'power_threshold must be None when return_power is True')
+        else:
+            if power_threshold is None:
+                raise ValueError(
+                    'power_threshold is required when return_power is False')
+            power_threshold = _check_real_number(
+                power_threshold, 'power_threshold', non_negative=True)
         window = _check_real_array(data, 'data', contents='samples')
         _check_array_dimensions(window, [(1,)])
 
@@ -168,6 +187,8 @@ class Estimator:
                 'computed power is non-finite; check the signal scale and '
                 'filter coefficients')
 
+        if return_power:
+            return float(power)
         return bool(power >= power_threshold)
 
     def get_phase_from_triggers(self,

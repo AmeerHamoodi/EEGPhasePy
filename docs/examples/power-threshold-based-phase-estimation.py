@@ -13,10 +13,10 @@ Power-thresholded EEG phase estimation
 # recording, then evaluated on the held-out half. The 25th percentile below is
 # only an example choice: the useful operating point depends on how much data
 # you can reject and what phase-estimation performance your experiment needs.
-# Zrenner et al. :cite:t:`Zrenner2018-hh` provide context on EEG-defined
-# excitability states and stimulation. This example derives its own cutoff
-# instead of treating a study-specific power value as universal; power depends
-# on the recording setup and signal scale.
+# For context on EEG-defined excitability states and stimulation, see
+# :cite:t:`Zrenner2018-hh`. This example derives its own cutoff instead of
+# treating a study-specific power value as universal; power depends on the
+# recording setup and signal scale.
 
 # %%
 from EEGPhasePy.estimators import ETP
@@ -72,24 +72,15 @@ etp_rs.fit(training_signal_rs, min_ipi=int(fs_rs * 1/12))
 
 window_len_rs = int(2 * fs_rs)
 window_step_rs = int(0.5 * fs_rs)
-window_edge_rs = int((etp_rs.window_edge / 1000) * fs_rs)
 
 
 # %% [markdown]
-# ``check_power_threshold`` accepts a cutoff but does not return the measured
-# power. To inspect the training distribution, calculate the same quantity
-# that the estimator uses: the mean squared Hilbert-envelope amplitude after
-# applying the real-time filter and removing its edge samples. This is a
-# signal-power measure (not a power spectral density). MNE returns EEG in
-# volts, so the plotted power is converted to :math:`\\mu V^2`; the cutoff
-# passed to ``check_power_threshold`` remains in the raw signal's :math:`V^2`.
-
-# %%
-def mean_alpha_envelope_power(window):
-    filtered_window = signal.filtfilt(rt_filter_rs, 1.0, window)
-    envelope = np.abs(signal.hilbert(filtered_window))
-    envelope = envelope[window_edge_rs:-window_edge_rs]
-    return np.mean(np.square(envelope))
+# ``check_power_threshold`` can return the measured power directly. It
+# calculates mean squared Hilbert-envelope amplitude after applying the
+# real-time filter and removing its edge samples. This is a signal-power
+# measure, not a power spectral density. MNE returns EEG in volts, so the
+# plotted power is converted to microvolts squared, while the cutoff passed
+# for threshold checks remains in volts squared.
 
 
 calibration_powers = []
@@ -98,7 +89,8 @@ for start in range(
         0, len(training_signal_rs) - window_len_rs + 1,
         calibration_step_rs):
     window = training_signal_rs[start:start + window_len_rs]
-    calibration_powers.append(mean_alpha_envelope_power(window))
+    calibration_powers.append(etp_rs.check_power_threshold(
+        window, return_power=True))
 
 calibration_powers = np.asarray(calibration_powers)
 
@@ -139,7 +131,7 @@ ax.axvline(
     label='Selected cutoff'
 )
 ax.set(
-    xlabel='Mean squared alpha envelope (µV²)',
+    xlabel='Mean squared alpha envelope (microvolts squared)',
     ylabel='Number of overlapping windows',
     title='Training-window alpha power used to choose the cutoff'
 )
@@ -247,12 +239,13 @@ for label, results in (
 # The same gate works with PHASTIMATE (the AR phase estimator): check the
 # power first, then call ``predict`` only when the window passes. For example:
 #
-# ``if phastimate.check_power_threshold(window, power_threshold):``
-# ``    if phastimate.predict(window, target_phase=0, tolerance=15):``
-# ``        triggers.append(window_end_sample)``
+# .. code-block:: python
+#
+#    if phastimate.check_power_threshold(window, power_threshold):
+#        if phastimate.predict(window, target_phase=0, tolerance=15):
+#            triggers.append(window_end_sample)
 #
 # Use the estimator's same real-time filter, window duration, electrode,
 # reference, and signal units when transferring a calibrated threshold. If
 # these change, recalibrate the power distribution. See the power-threshold
-# guide and Zrenner et al. (2018) for further context on EEG-defined brain
-# states and phase-triggered stimulation.
+# guide for the API details.

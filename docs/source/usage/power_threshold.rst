@@ -26,6 +26,11 @@ depends on the selected filter, window duration, and acquisition scale, so
 choose the threshold using representative data collected with the same
 settings.
 
+To inspect the measured power without comparing it to a cutoff, omit
+``power_threshold`` and pass ``return_power=True``. The method then returns a
+float in squared input-amplitude units. In its default mode,
+``power_threshold`` is required and the method returns a boolean.
+
 .. code-block:: python
 
    import numpy as np
@@ -41,10 +46,20 @@ settings.
    minimum_power = 4.0
    window = np.asarray(current_eeg_window)
 
-    # Assume etp has already been fitted on representative training data.
+   # Assume etp has already been fitted on representative training data.
    if etp.check_power_threshold(window, minimum_power):
        samples_to_wait = etp.predict(window, target_phase=0)
        # Schedule the trigger after samples_to_wait samples.
+
+To inspect powers and derive a cutoff from representative windows, call:
+
+.. code-block:: python
+
+   training_powers = [
+       etp.check_power_threshold(window, return_power=True)
+       for window in training_windows
+   ]
+   minimum_power = np.quantile(training_powers, 0.25)
 
 Choosing a threshold
 --------------------
@@ -57,11 +72,11 @@ cutoff that rejects unsuitable windows without discarding an unacceptable
 proportion of usable data. Reassess the cutoff if acquisition settings or
 preprocessing change.
 
-``power_threshold`` must be a finite, non-negative real number. The input
-window must contain finite real numeric samples and be long enough for the
-filter's padding and the configured edge removal. Invalid inputs raise an
-informative ``TypeError`` or ``ValueError``. The method returns a boolean and
-does not alter the estimator's phase prediction state.
+When comparing against a cutoff, ``power_threshold`` must be a finite,
+non-negative real number. The input window must contain finite real numeric
+samples and be long enough for the filter's padding and the configured edge
+removal. Invalid inputs raise an informative ``TypeError`` or ``ValueError``.
+Neither mode alters the estimator's phase prediction state.
 
 Practical guide
 ---------------
