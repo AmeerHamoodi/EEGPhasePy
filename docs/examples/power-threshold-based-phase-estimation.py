@@ -49,7 +49,7 @@ raw_rs = mne.io.read_raw_eeglab(
 )
 
 fs_rs = int(raw_rs.info['sfreq'])
-raw_rs.pick_channels(['O1'])
+raw_rs.pick(['O1'])
 rs_signal = raw_rs.get_data()[0] * 1e6
 
 
@@ -134,7 +134,7 @@ ax.set(
     ylabel='Number of overlapping windows',
     title='Training-window alpha power used to choose the cutoff'
 )
-ax.legend()
+_ = ax.legend()
 
 
 # %% [markdown]
