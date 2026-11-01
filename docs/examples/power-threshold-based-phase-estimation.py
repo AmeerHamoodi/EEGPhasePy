@@ -79,8 +79,7 @@ window_step_rs = int(0.5 * fs_rs)
 # calculates mean squared Hilbert-envelope amplitude after applying the
 # real-time filter and removing its edge samples. This is a signal-power
 # measure, not a power spectral density. MNE returns EEG in volts, so the
-# plotted power is converted to microvolts squared, while the cutoff passed
-# for threshold checks remains in volts squared.
+# method returns power in microvolts squared, and cutoffs use those same units.
 
 
 calibration_powers = []
@@ -111,10 +110,9 @@ calibration_powers = np.asarray(calibration_powers)
 threshold_quantile = 0.25
 power_threshold_rs = float(np.quantile(
     calibration_powers, threshold_quantile))
-power_threshold_microvolt_squared = power_threshold_rs * 1e12
 
 print(
-    f"Example cutoff: {power_threshold_microvolt_squared:.2f} uV^2 "
+    f"Example cutoff: {power_threshold_rs:.2f} uV^2 "
     f"(training {threshold_quantile:.0%} power percentile)"
 )
 print(
@@ -123,15 +121,15 @@ print(
 )
 
 fig, ax = plt.subplots()
-ax.hist(calibration_powers * 1e12, bins=50)
+ax.hist(calibration_powers, bins=50)
 ax.axvline(
-    power_threshold_microvolt_squared,
+    power_threshold_rs,
     color='red',
     linestyle='--',
     label='Selected cutoff'
 )
 ax.set(
-    xlabel='Mean squared alpha envelope (microvolts squared)',
+    xlabel='Mean squared alpha envelope (uV^2)',
     ylabel='Number of overlapping windows',
     title='Training-window alpha power used to choose the cutoff'
 )

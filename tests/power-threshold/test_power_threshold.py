@@ -28,16 +28,19 @@ def test_power_threshold_matches_bandpass_hilbert_pipeline(
         estimator_and_coefficients, frequency, amplitude):
     estimator, numerator, denominator = estimator_and_coefficients
     time = np.arange(0, 2, 1 / estimator.sampling_rate)
-    window = amplitude * np.sin(2 * np.pi * frequency * time)
+    window = amplitude * 1e-6 * np.sin(2 * np.pi * frequency * time)
 
     filtered = signal.filtfilt(numerator, denominator, window)
     edge = int(estimator.window_edge * estimator.sampling_rate / 1000)
     envelope = np.abs(signal.hilbert(filtered))[edge:-edge]
-    expected_power = np.mean(envelope ** 2)
+    expected_power = np.mean(envelope ** 2) * 1e12
+    measured_power = estimator.check_power_threshold(
+        window, return_power=True)
 
-    assert estimator.check_power_threshold(window, expected_power) is True
+    assert measured_power == pytest.approx(expected_power)
+    assert estimator.check_power_threshold(window, measured_power) is True
     assert estimator.check_power_threshold(
-        window, np.nextafter(expected_power, np.inf)) is False
+        window, np.nextafter(measured_power, np.inf)) is False
 
     if frequency == 10:
         assert expected_power == pytest.approx(amplitude ** 2, rel=0.1)
@@ -49,12 +52,12 @@ def test_power_threshold_can_return_computed_power(
         estimator_and_coefficients):
     estimator, numerator, denominator = estimator_and_coefficients
     time = np.arange(0, 2, 1 / estimator.sampling_rate)
-    window = 2 * np.sin(2 * np.pi * 10 * time)
+    window = 2e-6 * np.sin(2 * np.pi * 10 * time)
 
     filtered = signal.filtfilt(numerator, denominator, window)
     edge = int(estimator.window_edge * estimator.sampling_rate / 1000)
     envelope = np.abs(signal.hilbert(filtered))[edge:-edge]
-    expected_power = np.mean(envelope ** 2)
+    expected_power = np.mean(envelope ** 2) * 1e12
 
     power = estimator.check_power_threshold(window, return_power=True)
 
@@ -87,16 +90,12 @@ def test_power_threshold_scales_with_amplitude_squared(
         estimator_and_coefficients):
     estimator, _, _ = estimator_and_coefficients
     time = np.arange(0, 2, 1 / estimator.sampling_rate)
-    base_window = np.sin(2 * np.pi * 10 * time)
-    edge = int(estimator.window_edge * estimator.sampling_rate / 1000)
+    base_window = 1e-6 * np.sin(2 * np.pi * 10 * time)
 
-    def estimate_power(window):
-        filtered = estimator._filter_data(estimator.real_time_filter, window)
-        envelope = np.abs(signal.hilbert(filtered))[edge:-edge]
-        return np.mean(envelope ** 2)
-
-    assert estimate_power(2 * base_window) == pytest.approx(
-        4 * estimate_power(base_window))
+    assert estimator.check_power_threshold(
+        2 * base_window, return_power=True) == pytest.approx(
+            4 * estimator.check_power_threshold(
+                base_window, return_power=True))
 
 
 def test_zero_signal_and_zero_threshold_pass():

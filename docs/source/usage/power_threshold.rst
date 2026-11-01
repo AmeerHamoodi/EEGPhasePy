@@ -20,16 +20,16 @@ compares its mean with the threshold. The threshold is inclusive: a window
 passes when its power is greater than or equal to the threshold.
 
 This is mean squared Hilbert-envelope amplitude, not a power spectral density.
-Its units are the square of the input signal's amplitude units (for example,
-microvolts squared when the input is measured in microvolts). The result
-depends on the selected filter, window duration, and acquisition scale, so
-choose the threshold using representative data collected with the same
-settings.
+Input EEG samples must be in volts; the method converts the envelope to
+microvolts before calculating power. Both the returned power and the
+``power_threshold`` argument are therefore in microvolts squared. The result
+depends on the selected filter and window duration, so choose the threshold
+using representative data collected with the same settings.
 
 To inspect the measured power without comparing it to a cutoff, omit
 ``power_threshold`` and pass ``return_power=True``. The method then returns a
-float in squared input-amplitude units. In its default mode,
-``power_threshold`` is required and the method returns a boolean.
+float in microvolts squared. In its default mode, ``power_threshold`` is
+required in microvolts squared and the method returns a boolean.
 
 .. code-block:: python
 
@@ -42,7 +42,7 @@ float in squared input-amplitude units. In its default mode,
    gt_filter = signal.firwin(300, [8, 12], fs=fs, pass_zero=False)
    etp = ETP(rt_filter, gt_filter, fs)
 
-   # Set this from representative data in the signal's squared amplitude units.
+   # Set this from representative data in microvolts squared.
    minimum_power = 4.0
    window = np.asarray(current_eeg_window)
 
@@ -73,10 +73,11 @@ proportion of usable data. Reassess the cutoff if acquisition settings or
 preprocessing change.
 
 When comparing against a cutoff, ``power_threshold`` must be a finite,
-non-negative real number. The input window must contain finite real numeric
-samples and be long enough for the filter's padding and the configured edge
-removal. Invalid inputs raise an informative ``TypeError`` or ``ValueError``.
-Neither mode alters the estimator's phase prediction state.
+non-negative real number in microvolts squared. The input window must contain
+finite real numeric samples in volts and be long enough for the filter's
+padding and the configured edge removal. Invalid inputs raise an informative
+``TypeError`` or ``ValueError``. Neither mode alters the estimator's phase
+prediction state.
 
 Practical guide
 ---------------

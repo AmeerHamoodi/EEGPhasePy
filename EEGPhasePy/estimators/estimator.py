@@ -117,15 +117,16 @@ class Estimator:
 
         Power is calculated by filtering the window, taking the Hilbert
         amplitude envelope, trimming the configured filter-edge samples from
-        both ends, and averaging the squared envelope. The threshold is
-        therefore expressed in squared input-amplitude units.
+        both ends, converting volts to microvolts, and averaging the squared
+        envelope. Input data must be expressed in volts. Thresholds and
+        returned power are expressed in microvolts squared.
 
         Parameters
         ----------
         data : array_like (n_samples,)
             The unfiltered EEG data in the current window
         power_threshold : int | float | numpy.integer | numpy.floating | None
-            Minimum mean-square Hilbert-envelope power required for the window.
+            Minimum mean-square Hilbert-envelope power in microvolts squared.
             Required unless ``return_power`` is True.
         return_power : bool
             If True, return the computed power instead of comparing it with
@@ -135,8 +136,8 @@ class Estimator:
         Returns
         -------
         result : bool | float
-            The comparison result, or the computed power when
-            ``return_power`` is True
+            The comparison result, or the computed power in microvolts squared
+            when ``return_power`` is True
         '''
         _check_type(data, ['array'])
         _check_type(return_power, ['bool'])
@@ -181,7 +182,7 @@ class Estimator:
             raise ValueError(
                 'real_time_filter produced non-finite values for this window')
         with np.errstate(over='ignore', invalid='ignore'):
-            power = np.mean(np.square(envelope))
+            power = np.mean(np.square(envelope * 1e6))
         if not np.isfinite(power):
             raise ValueError(
                 'computed power is non-finite; check the signal scale and '
