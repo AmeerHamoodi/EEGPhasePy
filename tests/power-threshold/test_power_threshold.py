@@ -34,10 +34,13 @@ def test_power_threshold_matches_bandpass_hilbert_pipeline(
     edge = int(estimator.window_edge * estimator.sampling_rate / 1000)
     envelope = np.abs(signal.hilbert(filtered))[edge:-edge]
     expected_power = np.mean(envelope ** 2)
+    measured_power = estimator.check_power_threshold(
+        window, return_power=True)
 
-    assert estimator.check_power_threshold(window, expected_power) is True
+    assert measured_power == pytest.approx(expected_power)
+    assert estimator.check_power_threshold(window, measured_power) is True
     assert estimator.check_power_threshold(
-        window, np.nextafter(expected_power, np.inf)) is False
+        window, np.nextafter(measured_power, np.inf)) is False
 
     if frequency == 10:
         assert expected_power == pytest.approx(amplitude ** 2, rel=0.1)
@@ -45,20 +48,65 @@ def test_power_threshold_matches_bandpass_hilbert_pipeline(
         assert expected_power < 0.01
 
 
+def test_power_threshold_can_return_computed_power(
+        estimator_and_coefficients):
+    estimator, numerator, denominator = estimator_and_coefficients
+    time = np.arange(0, 2, 1 / estimator.sampling_rate)
+    window = 2 * np.sin(2 * np.pi * 10 * time)
+
+    filtered = signal.filtfilt(numerator, denominator, window)
+    edge = int(estimator.window_edge * estimator.sampling_rate / 1000)
+    envelope = np.abs(signal.hilbert(filtered))[edge:-edge]
+    expected_power = np.mean(envelope ** 2)
+
+    power = estimator.check_power_threshold(window, return_power=True)
+
+    assert isinstance(power, float)
+    assert power == pytest.approx(expected_power)
+
+
+def test_power_threshold_uses_microvolt_squared_cutoff(
+        estimator_and_coefficients):
+    estimator, _, _ = estimator_and_coefficients
+    time = np.arange(0, 2, 1 / estimator.sampling_rate)
+    strong_alpha = 2 * np.sin(2 * np.pi * 10 * time)
+
+    assert estimator.check_power_threshold(strong_alpha, 1.0) is True
+    assert estimator.check_power_threshold(
+        0.1 * strong_alpha, 1.0) is False
+
+
+def test_power_threshold_requires_threshold_in_comparison_mode(
+        estimator_and_coefficients):
+    estimator, _, _ = estimator_and_coefficients
+
+    with pytest.raises(
+            ValueError,
+            match='power_threshold is required when return_power is False'):
+        estimator.check_power_threshold(np.zeros(100))
+
+
+def test_power_threshold_rejects_threshold_in_power_return_mode(
+        estimator_and_coefficients):
+    estimator, _, _ = estimator_and_coefficients
+
+    with pytest.raises(
+            ValueError,
+            match='power_threshold must be None when return_power is True'):
+        estimator.check_power_threshold(
+            np.zeros(100), 0, return_power=True)
+
+
 def test_power_threshold_scales_with_amplitude_squared(
         estimator_and_coefficients):
     estimator, _, _ = estimator_and_coefficients
     time = np.arange(0, 2, 1 / estimator.sampling_rate)
     base_window = np.sin(2 * np.pi * 10 * time)
-    edge = int(estimator.window_edge * estimator.sampling_rate / 1000)
 
-    def estimate_power(window):
-        filtered = estimator._filter_data(estimator.real_time_filter, window)
-        envelope = np.abs(signal.hilbert(filtered))[edge:-edge]
-        return np.mean(envelope ** 2)
-
-    assert estimate_power(2 * base_window) == pytest.approx(
-        4 * estimate_power(base_window))
+    assert estimator.check_power_threshold(
+        2 * base_window, return_power=True) == pytest.approx(
+            4 * estimator.check_power_threshold(
+                base_window, return_power=True))
 
 
 def test_zero_signal_and_zero_threshold_pass():
