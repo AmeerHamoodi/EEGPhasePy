@@ -102,7 +102,8 @@ calibration_powers = np.asarray(calibration_powers)
 # This is a starting point for the example, not a claim that 25% is optimal.
 # In a real study, inspect this distribution, choose candidate cutoffs before
 # final evaluation, and use an independent validation/test recording to assess
-# the accuracy-versus-usable-data tradeoff.
+# the accuracy-versus-usable-data tradeoff. The dashed red line in the
+# histogram marks the selected cutoff.
 #
 # Calibration windows are sampled every second, so they overlap by 50%. The
 # percentile describes windows, not independent observations or participants.
@@ -126,15 +127,13 @@ ax.hist(calibration_powers, bins=50)
 ax.axvline(
     power_threshold_rs,
     color='red',
-    linestyle='--',
-    label='Selected cutoff'
+    linestyle='--'
 )
 ax.set(
     xlabel='Mean squared alpha envelope (uV^2)',
     ylabel='Number of overlapping windows',
     title='Training-window alpha power used to choose the cutoff'
 )
-_ = ax.legend()
 
 
 # %% [markdown]
