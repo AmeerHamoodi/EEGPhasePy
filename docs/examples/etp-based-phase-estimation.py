@@ -124,11 +124,11 @@ polar_hist_fig, waveform_fig = run_etp_sim(target_phase=0, accuracy_target=0)
 polar_hist_fig, waveform_fig = run_etp_sim(
     target_phase=270, accuracy_target=270, tmin=0.05, tmax=0.05)
 # %% [markdown]
-# Similarly, to target troughs we change `target_phase` to :math:`\pi`
+# Similarly, to target troughs we change `target_phase` to 180 (:math:`\pi`)
 
 # %%
 polar_hist_fig, waveform_fig = run_etp_sim(
-    target_phase=np.pi, accuracy_target=180, tmin=0.05, tmax=0.05)
+    target_phase=180, accuracy_target=180, tmin=0.05, tmax=0.05)
 
 # %% [markdown]
 # Resting State EEG (OpenNeuro ds004504)

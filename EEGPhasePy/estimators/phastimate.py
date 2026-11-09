@@ -67,6 +67,29 @@ class PHASTIMATE(Estimator):
         _check_type(ar_order, ['int'])
         self.ar_order = ar_order
 
+    def _fit_ar(self, data: npt.ArrayLike) -> np.ndarray:
+        '''
+        Fit AR coefficients to `data` with the Yule-Walker equations
+
+        Uses the biased autocorrelation estimate (``method='mle'``), the same
+        estimator as MATLAB's ``aryule`` used by the original PHASTIMATE.
+        Unlike statsmodels' default ``'adjusted'`` estimate, it always yields
+        a stable model, so forecasts cannot blow up
+
+        Parameters
+        ----------
+        data : array-like
+            Filtered time series data.
+
+        Returns
+        --------
+        ar_params : ndarray
+            AR coefficients (phi_1, ..., phi_p).
+        '''
+        ar_params, _ = yule_walker(data, self.ar_order, method='mle')
+
+        return ar_params
+
     def _ar_forecast(self, data: npt.ArrayLike,
                      ar_params: npt.ArrayLike, steps=10) -> np.ndarray:
         """
@@ -140,6 +163,11 @@ class PHASTIMATE(Estimator):
 
                 window_i += window_step
 
+            # no triggers means accuracy is undefined (nan); score it as
+            # the worst possible run so the optimizer moves away from it
+            if len(triggers) == 0:
+                return 0.0
+
             accuracy = self.phase_accuracy_from_triggers(data, triggers, 0)
 
             return accuracy
@@ -193,6 +221,11 @@ class PHASTIMATE(Estimator):
                     window_i += window_len
 
                 window_i += window_step
+
+            # no triggers means accuracy is undefined (nan); score it as
+            # the worst possible run so the optimizer moves away from it
+            if len(triggers) == 0:
+                return 0.0
 
             accuracy = self.phase_accuracy_from_triggers(data, triggers, 0)
 
@@ -288,6 +321,36 @@ class PHASTIMATE(Estimator):
             self.window_edge = int(solution[0])
             self.ar_order = int(solution[1])
 
+    def estimate_phase(self, data: npt.ArrayLike) -> float:
+        '''
+        Estimate the phase at the current time
+
+        Parameters
+        -----------
+        data : np.ndarray[float] | list[float]
+            The (n_samples,) array containing the unfiltered EEG data in the
+            current window
+
+        Returns
+        --------
+        phase : float
+            Estimated phase in degrees (0 to 360) at the sample immediately
+            after the window. 0 is a peak and 180 is a trough
+        '''
+        _check_type(data, ['array'])
+        _check_array_dimensions(data, [(1,)])
+
+        edge = int((self.window_edge / 1000) * self.sampling_rate)
+        filtered_data = self._filter_data(
+            self.real_time_filter, data)[edge:-edge]
+
+        ar_params = self._fit_ar(filtered_data)
+        forecasted_data = self._ar_forecast(filtered_data, ar_params, 2*edge)
+        full_data = np.concatenate([filtered_data, forecasted_data])
+
+        analytic_signal = signal.hilbert(full_data)
+        return float(np.angle(analytic_signal[-edge], deg=True) % 360)
+
     def predict(self,
                 data: npt.ArrayLike,
                 target_phase: Union[float, int],
@@ -314,25 +377,12 @@ class PHASTIMATE(Estimator):
             tolerance
 
         '''
-        _check_type(data, ['array'])
         _check_type(target_phase, ['int', 'float'])
         _check_type(tolerance, ['int', 'float'])
-        _check_array_dimensions(data, [(1,)])
 
-        edge = int((self.window_edge / 1000) * self.sampling_rate)
-        filtered_data = self._filter_data(
-            self.real_time_filter, data)[edge:-edge]
+        phase = self.estimate_phase(data)
 
-        ar_params, _ = yule_walker(filtered_data, self.ar_order)
-        forecasted_data = self._ar_forecast(filtered_data, ar_params, 2*edge)
-        full_data = np.concatenate([filtered_data, forecasted_data])
+        # smallest angle between the two phases, handling the wrap at 360
+        difference = abs((phase - target_phase + 180) % 360 - 180)
 
-        analytic_signal = signal.hilbert(full_data)
-        phase_t0 = np.angle(analytic_signal[-edge], deg=True) % 360
-
-        if target_phase % 360 - tolerance < 0:
-            return np.isclose(phase_t0, target_phase % 360, atol=tolerance) or\
-                np.isclose(phase_t0, 360 - (target_phase %
-                           360), atol=tolerance)
-        else:
-            return np.isclose(phase_t0, target_phase % 360, atol=tolerance)
+        return bool(difference <= tolerance)

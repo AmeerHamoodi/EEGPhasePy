@@ -1,10 +1,13 @@
 import numpy as np
 import pytest
+import scipy.signal as signal
 
 from EEGPhasePy.utils.check import (
     _check_filter_coefficients,
     _check_real_array,
     _check_real_number,
+    _check_triggers,
+    _filter_form,
 )
 
 
@@ -79,3 +82,51 @@ def test_check_filter_coefficients_rejects_invalid_values(
         value, exception, message):
     with pytest.raises(exception, match=message):
         _check_filter_coefficients(value)
+
+
+def test_check_filter_coefficients_accepts_sos():
+    # two sections give a (2, 6) array, the same shape as a 5th order
+    # (numerator, denominator) pair. Column 3 (a0) of every section is 1
+    sos = signal.butter(2, [8, 12], btype='bandpass', fs=500, output='sos')
+    assert sos.shape == (2, 6)
+    assert _filter_form(sos) == 'sos'
+
+    coefficients, numerator_length, denominator_length = \
+        _check_filter_coefficients(sos)
+    np.testing.assert_array_equal(coefficients, sos)
+    assert (numerator_length, denominator_length) == (5, 5)
+
+    b, a = signal.butter(5, 10, fs=500)
+    assert _filter_form(np.array([b, a])) == 'ba'
+
+
+def test_check_filter_coefficients_rejects_unstable_filters():
+    with pytest.raises(ValueError, match=r'unstable.*\|z\| = 2'):
+        _check_filter_coefficients([[1.0, 0.0], [1.0, -2.0]])
+
+    unstable_sos = np.array([[1.0, 0.0, 0.0, 1.0, -2.0, 0.0]])
+    with pytest.raises(ValueError, match='unstable'):
+        _check_filter_coefficients(unstable_sos)
+
+
+@pytest.mark.parametrize('value,n_samples,expected', [
+    ([0, 5, 9], 10, [0, 5, 9]),
+    (np.array([1.0, 2.0]), 10, [1, 2]),
+    ([], 10, []),
+])
+def test_check_triggers_accepts_valid_indices(value, n_samples, expected):
+    triggers = _check_triggers(value, n_samples)
+    assert triggers.dtype == np.int64
+    np.testing.assert_array_equal(triggers, expected)
+
+
+@pytest.mark.parametrize('value,exception', [
+    ([-1], ValueError),
+    ([10], ValueError),
+    ([0.5], TypeError),
+    ([np.nan], TypeError),
+    ([True], TypeError),
+])
+def test_check_triggers_rejects_invalid_indices(value, exception):
+    with pytest.raises(exception):
+        _check_triggers(value, 10)

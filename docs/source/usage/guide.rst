@@ -20,3 +20,18 @@ How EEGPhasePy helps
 ---------------------
 
 EEGPhasePy includes implementation of both types of phase estimation algorithms. It also includes implementations of calculations of different stats for quantifying accuracy or reliability of EEG phase estimation + some visualization helpers.
+
+
+Choosing filters
+-----------------
+
+Every estimator takes a ``real_time_filter`` and a ``ground_truth_filter``. Each can be given as:
+
+* a 1D FIR numerator, e.g. ``signal.firwin(300, [8, 12], fs=fs, pass_zero=False)``
+* an IIR filter as second-order sections, e.g. ``signal.butter(4, [8, 12], btype='bandpass', fs=fs, output='sos')``
+* an IIR filter as a 2-row ``(numerator, denominator)`` array, e.g. ``signal.butter(2, [8, 12], btype='bandpass', fs=fs)``
+
+For IIR filters, use second-order sections (``output='sos'``). High-order or narrow-band IIR filters in ``(numerator, denominator)`` form
+are numerically unstable: a 6th order 8–12 Hz Butterworth band-pass at 2048 Hz, for example, has poles outside the unit circle once its
+coefficients are rounded, and filtering with it produces ``NaN``. EEGPhasePy checks the poles of every IIR filter when an estimator is
+created and raises an error for unstable filters.

@@ -1,13 +1,9 @@
-import os
 import pickle
 
 import numpy as np
 import pytest
 import scipy.signal as signal
 import scipy.stats as stats
-
-if not os.getenv('GITHUB_ACTIONS') == 'true':
-    import mne
 
 from EEGPhasePy.estimators import EPN
 
@@ -349,36 +345,120 @@ def test_epn_inherits_power_threshold(fitted_epn):
     assert fitted_epn.check_power_threshold(0.1 * strong_alpha, 1.0) is False
 
 
-def test_epn_real_data():
-    if not os.getenv('GITHUB_ACTIONS') == 'true':
-        training_data = mne.io.read_raw_curry(
-            "./tests/test_data/training-rsEEG.cdt")
-        testing_data = mne.io.read_raw_curry(
-            "./tests/test_data/testing-rsEEG.cdt")
-        fs = 2048
+@pytest.mark.parametrize('target_phase', [0, 180])
+def test_epn_real_data(resting_state_eeg, target_phase):
+    training_data, testing_data, fs = resting_state_eeg
 
-        c3_train_data = training_data.pick("C3").get_data()[0]
-        c3_test_data = testing_data.pick("C3").get_data()[0]
+    epn = EPN(signal.firwin(128, [8, 12], fs=fs, pass_zero=False),
+              signal.firwin(500, [8, 12], fs=fs, pass_zero=False), fs)
+    epn.fit(training_data, epochs=10, window_step=50, random_state=0)
 
-        epn = EPN(signal.firwin(128, [8, 13], fs=fs, pass_zero=False),
-                  signal.firwin(300, [8, 13], fs=fs, pass_zero=False), fs)
-        epn.fit(c3_train_data, epochs=10, window_step=50, random_state=0)
+    window_i = 0
+    window_step = int(0.004 * fs)
+    window_len = int(0.5 * fs)
 
-        window_i = 0
-        window_step = int(0.002 * fs)
-        window_len = int(0.5 * fs)
+    triggers = []
 
-        triggers = []
+    while window_i + window_len < len(testing_data):
+        window_data = testing_data[window_i:window_i + window_len]
 
-        while window_i + window_len < len(c3_test_data):
-            window_data = c3_test_data[window_i:window_i + window_len]
+        if epn.predict(window_data, target_phase, 10):
+            triggers.append(window_i + window_len)
+            window_i += window_len
 
-            if epn.predict(window_data, 0, 10):
-                triggers.append(window_i + window_len)
-                window_i += window_len
+        window_i += window_step
 
-            window_i += window_step
+    mean_phase = epn.mean_phase_from_triggers(
+        testing_data, triggers, degree=True)
+    accuracy = epn.phase_accuracy_from_triggers(
+        testing_data, triggers, target_phase)
 
-        mean_phase = epn.mean_phase_from_triggers(
-            c3_test_data, triggers, degree=True)
-        assert abs(circular_error(mean_phase, 0)) < 5
+    assert len(triggers) > 300
+    assert abs(circular_error(mean_phase, target_phase)) < 15
+    assert accuracy > 0.7
+
+
+def test_epn_fit_without_validation_records_no_validation(fitted_epn):
+    assert fitted_epn.validation_loss_history == []
+    assert fitted_epn.validation_error_history == []
+
+
+def test_epn_fit_records_validation_history(training_signal):
+    epn = fit_epn(training_signal, epochs=10, validation_fraction=0.25)
+
+    assert len(epn.loss_history) == 10
+    assert len(epn.validation_loss_history) == 10
+    assert len(epn.validation_error_history) == 10
+    assert epn.validation_loss_history[-1] < epn.validation_loss_history[0]
+    assert all(0 <= error <= 180 for error in epn.validation_error_history)
+
+
+def test_epn_validation_error_matches_held_out_error(training_signal):
+    # the validation error should be an honest estimate of the error on
+    # unseen data from the same participant
+    epn = fit_epn(training_signal, validation_fraction=0.25)
+    test_signal, true_phase = simulate_alpha(30, noise_std=1,
+                                             phase_offset=0.5, seed=2)
+
+    window_ends = np.arange(250, len(test_signal) - 1, 13)
+    estimated = [epn.estimate_phase(test_signal[:end]) for end in window_ends]
+    test_error = np.mean(np.abs(circular_error(estimated,
+                                               true_phase[window_ends])))
+
+    assert epn.validation_error_history[-1] == pytest.approx(test_error,
+                                                             abs=5)
+
+
+def test_epn_fit_stops_early_and_restores_best_weights(training_signal):
+    fit_kwargs = {'learning_rate': 1e-2, 'validation_fraction': 0.25}
+    stopped = fit_epn(training_signal, epochs=100, patience=2, **fit_kwargs)
+
+    assert len(stopped.loss_history) < 100
+    assert len(stopped.validation_loss_history) == \
+        len(stopped.loss_history)
+
+    # training is deterministic for a fixed random_state, so running only up
+    # to the best epoch reproduces the restored weights
+    best_epoch = int(np.argmin(stopped.validation_loss_history))
+    assert best_epoch == len(stopped.loss_history) - 3
+    best = fit_epn(training_signal, epochs=best_epoch + 1, **fit_kwargs)
+
+    np.testing.assert_array_equal(stopped._w1, best._w1)
+    np.testing.assert_array_equal(stopped._b2, best._b2)
+
+
+def test_epn_fit_verbose_prints_validation(training_signal, capsys):
+    fit_epn(training_signal, epochs=2, validation_fraction=0.25,
+            verbose=True)
+
+    output = capsys.readouterr().out
+    assert 'validation loss:' in output
+    assert 'validation error:' in output
+
+
+@pytest.mark.parametrize(('data', 'kwargs', 'error', 'message'), [
+    (None, {'validation_fraction': '0.2'}, TypeError,
+     'validation_fraction must be a real number'),
+    (None, {'validation_fraction': -0.1}, ValueError,
+     'validation_fraction must be non-negative'),
+    (None, {'validation_fraction': 1}, ValueError,
+     'validation_fraction must be less than 1'),
+    (None, {'patience': 2}, ValueError,
+     'patience requires validation_fraction'),
+    (None, {'patience': 0, 'validation_fraction': 0.2}, ValueError,
+     'patience must be at least 1'),
+    (None, {'patience': 1.5, 'validation_fraction': 0.2}, TypeError,
+     'Value must be an int type'),
+    (np.random.default_rng(0).normal(size=600),
+     {'validation_fraction': 0.5}, ValueError,
+     'leaves no training or no validation windows'),
+    (None, {'validation_fraction': 1e-6}, ValueError,
+     'leaves no training or no validation windows'),
+])
+def test_epn_fit_rejects_invalid_validation(training_signal, data, kwargs,
+                                            error, message):
+    epn = EPN(real_time_filter, ground_truth_filter, FS)
+    data = training_signal if data is None else data
+
+    with pytest.raises(error, match=message):
+        epn.fit(data, window_step=20, **kwargs)

@@ -151,27 +151,140 @@ def _check_real_array(value, name, contents='values'):
     return array
 
 
+def _filter_form(coefficients):
+    '''
+    Classify a validated coefficient array as FIR, (b, a) or SOS.
+
+    A 1D array is an FIR numerator. A 2D array with 6 columns whose leading
+    denominator coefficients (column 3) are all 1, as ``scipy.signal``
+    produces with ``output='sos'``, is a second-order-sections array. Any
+    other 2-row array is a (numerator, denominator) pair
+
+    Parameters
+    ----------
+    coefficients : numpy.ndarray
+        Filter coefficients
+
+    Returns
+    -------
+    str
+        ``'fir'``, ``'ba'`` or ``'sos'``, or None if the shape matches none
+    '''
+    if coefficients.ndim == 1:
+        return 'fir'
+    if coefficients.ndim != 2:
+        return None
+    if coefficients.shape[1] == 6 and coefficients.shape[0] >= 1 and \
+            np.all(coefficients[:, 3] == 1):
+        return 'sos'
+    if coefficients.shape[0] == 2:
+        return 'ba'
+    return None
+
+
 def _check_filter_coefficients(value, name='real_time_filter'):
     '''
-    Validate FIR or (numerator, denominator) filter coefficients.
+    Validate FIR, (numerator, denominator) or second-order-sections (SOS)
+    filter coefficients, and check that IIR filters are stable.
 
     Returns
     -------
     tuple
-        The coefficient array, numerator length, and denominator length
+        The coefficient array, numerator length, and denominator length.
+        For SOS filters both lengths are the order of the equivalent
+        (numerator, denominator) filter plus one, which is what
+        ``scipy.signal.sosfiltfilt`` pads by
     '''
     coefficients = _check_real_array(value, name, contents='coefficients')
-    if coefficients.ndim == 1:
-        numerator_length = len(coefficients)
-        denominator_length = 1
-    elif coefficients.ndim == 2 and coefficients.shape[0] == 2:
-        numerator_length, denominator_length = map(len, coefficients)
-    else:
+    form = _filter_form(coefficients)
+    if form is None:
         raise ValueError(
             f'{name} must be a 1D numerator or a 2-row '
-            '(numerator, denominator) array')
+            '(numerator, denominator) array, or an (n_sections, 6) array '
+            'of second-order sections')
+
+    if form == 'fir':
+        numerator_length = len(coefficients)
+        denominator_length = 1
+    elif form == 'ba':
+        numerator_length, denominator_length = map(len, coefficients)
+    else:
+        numerator_length = denominator_length = 2 * len(coefficients) + 1
 
     if numerator_length == 0 or denominator_length == 0:
         raise ValueError(f'{name} coefficients cannot be empty')
 
+    if form == 'ba':
+        denominators = coefficients[1:]
+    elif form == 'sos':
+        denominators = coefficients[:, 3:]
+    else:
+        denominators = []
+
+    for denominator in denominators:
+        if denominator[0] == 0:
+            raise ValueError(
+                f'{name} has a leading denominator coefficient of 0')
+        poles = np.roots(denominator)
+        if len(poles) > 0 and np.max(np.abs(poles)) >= 1:
+            message = (f'{name} is unstable: it has a pole at |z| = '
+                       f'{np.max(np.abs(poles)):.4g}, on or outside the '
+                       'unit circle, so filtering would produce '
+                       'non-finite or meaningless values.')
+            if form == 'ba':
+                message += (
+                    ' High-order IIR filters lose precision in '
+                    '(numerator, denominator) form; design the filter as '
+                    'second-order sections instead, e.g. '
+                    "scipy.signal.butter(..., output='sos')")
+            raise ValueError(message)
+
     return coefficients, numerator_length, denominator_length
+
+
+def _check_triggers(value, n_samples, name='triggers'):
+    '''
+    Validate trigger sample indices against a recording length.
+
+    Triggers must be whole numbers in the range [0, n_samples). Negative
+    indices are rejected rather than counted from the end of the recording.
+    Floats are accepted only if every value is a whole number.
+
+    Parameters
+    ----------
+    value : array_like
+        Trigger sample indices
+    n_samples : int
+        Number of samples in the recording the triggers index into
+    name : str
+        Name used in validation error messages
+
+    Returns
+    -------
+    numpy.ndarray
+        The triggers as an int64 array
+    '''
+    triggers = np.asarray(value)
+    if triggers.size == 0:
+        return triggers.astype(np.int64)
+
+    if np.issubdtype(triggers.dtype, np.integer):
+        triggers = triggers.astype(np.int64)
+    elif np.issubdtype(triggers.dtype, np.floating):
+        if not np.all(np.isfinite(triggers)) or \
+                not np.all(triggers == np.round(triggers)):
+            raise TypeError(
+                f'{name} must be whole-number sample indices')
+        triggers = triggers.astype(np.int64)
+    else:
+        raise TypeError(f'{name} must be integer sample indices')
+
+    out_of_range = (triggers < 0) | (triggers >= n_samples)
+    if np.any(out_of_range):
+        bad = triggers[out_of_range]
+        raise ValueError(
+            f'{name} must be sample indices in the range [0, {n_samples}) '
+            f'for data with {n_samples} samples; {len(bad)} are out of '
+            f'range (first: {bad[0]})')
+
+    return triggers

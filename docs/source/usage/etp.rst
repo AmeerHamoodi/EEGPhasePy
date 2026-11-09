@@ -76,11 +76,19 @@ on fitting ETP.
    etp = ETP(rt_filter, gt_filter, fs)
    etp.fit(training_signal, min_ipi=int(fs * 1/12))
 
+By default, ``fit`` estimates the inter-peak interval from the first 90 s of the training data and then calibrates on 255 windows taken from the data that follows,
+so it needs roughly 3 minutes of data. With less data, lower the ``ipi_duration`` (seconds) and ``n_windows`` arguments; ``fit`` raises a ``ValueError`` saying how much
+data is required if the training data is too short.
+
 Then, we will run a pseudo-real-time simulation using the testing signal. Here, we use the `predict` method of the `etp`
 object. `predict` returns the **number of samples to wait after the end of the window** before delivering the stimulus.
 In a real-time system this maps directly to a delay: once you have received the current window, simply wait the returned
 number of samples and then fire the stimulus. The ``target_phase`` argument is specified in **degrees**
 (e.g. ``0`` for a peak, ``180`` for a trough, ``270`` for a rising zero-crossing).
+
+The returned number of samples is never negative: ``predict`` returns the next time the target phase occurs. If your system needs time to deliver a stimulus
+after receiving a window, pass that latency (in samples) as ``min_samples_to_wait`` and ``predict`` will return the next occurrence of the target phase
+that is at least that far in the future.
 
 .. testcode::
 

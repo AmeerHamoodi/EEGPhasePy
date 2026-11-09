@@ -12,7 +12,9 @@ Basic usage
 If you already have an EEGPhasePy estimator fitted to your data, the simplest
 path is :py:meth:`~EEGPhasePy.estimators.Estimator.plot_mean_std_waveform_from_triggers`.
 Pass your raw EEG array, the sample indices where each trigger fired, and the
-time window (in seconds) to include on either side of t = 0:
+time window (in seconds) to include on either side of t = 0. Both ``tmin`` and
+``tmax`` are positive: ``tmin=0.1`` means 100 ms *before* the trigger. This
+differs from MNE, where ``tmin`` is negative; negative values raise an error:
 
 .. code-block:: python
    :caption: Plotting with an existing estimator

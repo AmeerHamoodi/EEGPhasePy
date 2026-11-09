@@ -34,6 +34,11 @@ class EPN(Estimator):
     the "ground-truth" phase, so it has to be fit on resting-state data from
     each participant before it is used.
 
+    EPN also does not use ``window_edge``. It is accepted, like
+    ``real_time_filter``, only so that
+    :py:meth:`~EEGPhasePy.estimators.Estimator.check_power_threshold` works
+    the same way as it does for the other estimators.
+
     This implementation is written in NumPy and does not require a deep
     learning framework.
     '''
@@ -114,6 +119,8 @@ class EPN(Estimator):
         self.hidden_size: int = hidden_size
         self.dropout: float = dropout
         self.loss_history: list = []
+        self.validation_loss_history: list = []
+        self.validation_error_history: list = []
 
         # set by `fit`
         self._n_samples = None
@@ -163,12 +170,55 @@ class EPN(Estimator):
         hidden = np.maximum(features @ self._w1 + self._b1, 0)
         return hidden @ self._w2 + self._b2
 
+    def _evaluate(self, data: np.ndarray, target_samples: np.ndarray,
+                  targets: np.ndarray, batch_size: int) -> tuple:
+        '''
+        Run the network without dropout on the windows ending before each
+        target sample and score it against the targets
+
+        Parameters
+        ----------
+        data : array (n_samples,)
+            Raw EEG the windows are taken from
+        target_samples : array (n_windows,)
+            Index of the sample after each window
+        targets : array (n_windows, 2)
+            Cosine and sine of the ground-truth phase at each target sample
+        batch_size : int
+            Number of windows to run through the network at once
+
+        Returns
+        -------
+        loss : float
+            Mean squared error between the outputs and the targets
+        mean_absolute_error : float
+            Mean absolute circular error of the estimated phase in degrees
+        '''
+        window_offsets = np.arange(-self._n_samples, 0)
+        squared_error = 0
+        absolute_error = 0
+
+        for start in range(0, len(target_samples), batch_size):
+            batch = slice(start, start + batch_size)
+            windows = data[target_samples[batch, None] + window_offsets]
+            output = self._forward(self._features(windows))
+
+            squared_error += np.sum((output - targets[batch]) ** 2)
+            difference = np.arctan2(output[:, 1], output[:, 0]) - \
+                np.arctan2(targets[batch, 1], targets[batch, 0])
+            absolute_error += np.sum(np.abs(np.angle(np.exp(1j * difference))))
+
+        return (squared_error / targets.size,
+                float(np.rad2deg(absolute_error / len(target_samples))))
+
     def fit(self,
             training_data: npt.ArrayLike,
             epochs: int = 50,
             batch_size: int = 512,
             learning_rate: Union[float, int] = 1e-3,
             window_step: int = 10,
+            validation_fraction: Union[float, int] = 0,
+            patience: Optional[int] = None,
             random_state: Optional[int] = None,
             verbose: bool = False):
         '''
@@ -192,6 +242,24 @@ class EPN(Estimator):
         far more windows, and the defaults use fewer epochs and a larger
         learning rate.
 
+        With the default ``window_step`` of 10 ms, consecutive 500 ms windows
+        overlap by 98%, so neighbouring windows are near copies of each other
+        shifted by a few samples. Windows are shuffled every epoch, so each
+        batch is drawn from across the whole recording, but the number of
+        independent windows is still set by the length of the recording, not
+        by ``window_step``. A smaller step gives the network every phase
+        offset of the data at the cost of slower epochs; a larger step makes
+        epochs faster but needs more of them to reach the same loss.
+
+        If ``validation_fraction`` is set, the windows at the end of the
+        recording are held out to measure performance on unseen data after
+        each epoch. Windows are not split at random, because overlapping
+        windows would put almost every validation sample in the training set
+        too. Training windows that share samples with the held-out data, or
+        whose target is within one ground-truth filter length of it, are
+        dropped. Set ``patience`` to stop training once the validation loss
+        stops improving; the weights from the best epoch are kept.
+
         Parameters
         ----------
         training_data : array (n_samples,)
@@ -206,11 +274,21 @@ class EPN(Estimator):
             Learning rate for the Adam optimizer
         window_step : 10 | int
             Time in ms between the start of consecutive training windows
+        validation_fraction : 0 | float
+            Fraction of the windows, taken from the end of the recording, to
+            hold out for validation. Must be in the range [0, 1). With 0, no
+            data is held out
+        patience : None | int
+            Number of epochs without an improvement in validation loss before
+            training stops early. The weights from the epoch with the lowest
+            validation loss are restored. Requires ``validation_fraction``.
+            With None, all ``epochs`` are run
         random_state : None | int
             Seed used for weight initialization, shuffling and dropout. Pass
             an int to make training reproducible
         verbose : False | bool
-            Whether to print the training loss after each epoch
+            Whether to print the training (and validation) loss after each
+            epoch
 
         Returns
         -------
@@ -223,7 +301,11 @@ class EPN(Estimator):
         _check_type(verbose, ['bool'])
         if random_state is not None:
             _check_type(random_state, ['int'])
+        if patience is not None:
+            _check_type(patience, ['int'])
         learning_rate = _check_real_number(learning_rate, 'learning_rate')
+        validation_fraction = _check_real_number(
+            validation_fraction, 'validation_fraction', non_negative=True)
 
         training_data = _check_real_array(
             training_data, 'training_data', contents='samples')
@@ -235,6 +317,15 @@ class EPN(Estimator):
             raise ValueError("batch_size must be at least 1")
         if learning_rate <= 0:
             raise ValueError("learning_rate must be positive")
+        if validation_fraction >= 1:
+            raise ValueError("validation_fraction must be less than 1")
+        if patience is not None:
+            if patience < 1:
+                raise ValueError("patience must be at least 1")
+            if validation_fraction == 0:
+                raise ValueError(
+                    "patience requires validation_fraction to be greater "
+                    "than 0")
 
         fs = self.sampling_rate
         n_samples = int((self.window_len / 1000) * fs)
@@ -264,13 +355,34 @@ class EPN(Estimator):
         target_samples = np.arange(
             max(n_samples, margin), len(training_data) - margin, step)
 
+        validation_samples = np.array([], dtype=int)
+        if validation_fraction > 0:
+            n_validation = int(round(len(target_samples) *
+                                     validation_fraction))
+            validation_samples = target_samples[len(target_samples) -
+                                                n_validation:]
+            if n_validation > 0:
+                # keep training windows and the data their targets are
+                # filtered from clear of the first validation window
+                gap_start = validation_samples[0] - n_samples - margin
+                target_samples = target_samples[target_samples < gap_start]
+
+            if n_validation == 0 or len(target_samples) == 0:
+                raise ValueError(
+                    f"validation_fraction={validation_fraction:g} leaves no "
+                    "training or no validation windows. Pass more data or "
+                    "choose a different validation_fraction")
+
         # ground truth is hard to define for phase estimation, see Zrenner
         # et al., 2020 for a more detailed discussion
         filtered_data = self._filter_data(
             self.ground_truth_filter, training_data)
         ground_truth_phase = np.angle(signal.hilbert(filtered_data))
 
-        input_scale = np.std(np.diff(training_data))
+        # scale by the training windows only, so held-out data cannot leak in
+        scale_end = target_samples[-1] if len(validation_samples) > 0 \
+            else len(training_data)
+        input_scale = np.std(np.diff(training_data[:scale_end]))
         if input_scale == 0:
             raise ValueError("training_data must not be constant")
 
@@ -292,6 +404,9 @@ class EPN(Estimator):
         targets = np.column_stack([
             np.cos(ground_truth_phase[target_samples]),
             np.sin(ground_truth_phase[target_samples])])
+        validation_targets = np.column_stack([
+            np.cos(ground_truth_phase[validation_samples]),
+            np.sin(ground_truth_phase[validation_samples])])
         window_offsets = np.arange(-n_samples, 0)
 
         # Adam state
@@ -303,6 +418,11 @@ class EPN(Estimator):
 
         keep_probability = 1 - self.dropout
         self.loss_history = []
+        self.validation_loss_history = []
+        self.validation_error_history = []
+        best_loss = np.inf
+        best_params = None
+        epochs_without_improvement = 0
 
         for epoch in range(epochs):
             order = rng.permutation(len(target_samples))
@@ -346,10 +466,38 @@ class EPN(Estimator):
                         (np.sqrt(second_corrected) + epsilon)
 
             self.loss_history.append(squared_error / targets.size)
+            message = f"[EPN] Epoch {epoch + 1}/{epochs} - loss: " + \
+                f"{self.loss_history[-1]:.4f}"
+
+            if len(validation_samples) > 0:
+                validation_loss, validation_error = self._evaluate(
+                    training_data, validation_samples, validation_targets,
+                    batch_size)
+                self.validation_loss_history.append(validation_loss)
+                self.validation_error_history.append(validation_error)
+                message += f" - validation loss: {validation_loss:.4f}" + \
+                    f" - validation error: {validation_error:.1f} deg"
+
+                if validation_loss < best_loss:
+                    best_loss = validation_loss
+                    best_params = [param.copy() for param in params]
+                    epochs_without_improvement = 0
+                else:
+                    epochs_without_improvement += 1
 
             if verbose:
-                print(f"[EPN] Epoch {epoch + 1}/{epochs} - loss: "
-                      f"{self.loss_history[-1]:.4f}")
+                print(message)
+
+            if patience is not None and \
+                    epochs_without_improvement >= patience:
+                if verbose:
+                    print(f"[EPN] Stopping early: validation loss has not "
+                          f"improved for {patience} epochs")
+                break
+
+        if patience is not None:
+            for param, best in zip(params, best_params):
+                param[...] = best
 
         return self
 

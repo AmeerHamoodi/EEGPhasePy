@@ -43,7 +43,7 @@ Our implementation follows the architecture in :cite:t:`Liu2025-epn`, but there 
   work on a single channel, so any spatial filtering or downsampling should be done before passing data in. We recommend 500 Hz to match the original work. It also
   keeps training fast since the size of the network grows with the number of samples in the window.
 * The average pooling kernel is given in ms (``pool_len``) to match the rest of the package. The default of 26 ms is the 13 sample kernel used by :cite:t:`Liu2025-epn` at 500 Hz.
-* ``real_time_filter`` is not used to estimate phase, since EPN works on the raw window. It is still required so that
+* ``real_time_filter`` and ``window_edge`` are not used to estimate phase, since EPN works on the raw window. They are still accepted so that
   :py:meth:`~EEGPhasePy.estimators.Estimator.check_power_threshold` works the same way as it does for the other estimators.
 
 
@@ -110,6 +110,16 @@ check that it has levelled off.
 
    epn = EPN(rt_filter, gt_filter, fs)
    epn.fit(training_signal, random_state=0)
+
+To check how well the network does on data it hasn't seen, pass ``validation_fraction``. That fraction of the training windows is held out from the end of the
+recording (not at random, since neighbouring windows overlap) and, after each epoch, the validation loss and the mean absolute phase error in degrees are stored in
+``epn.validation_loss_history`` and ``epn.validation_error_history``. Adding ``patience`` stops training once the validation loss hasn't improved for that many
+epochs and keeps the weights from the best epoch.
+
+.. testcode::
+
+   epn_validated = EPN(rt_filter, gt_filter, fs)
+   epn_validated.fit(training_signal, validation_fraction=0.2, patience=5, random_state=0)
 
 Then, we will run a pseudo-real-time simulation using the testing signal. Like :py:class:`~EEGPhasePy.estimators.PHASTIMATE`, :py:meth:`~EEGPhasePy.estimators.EPN.predict`
 returns a boolean value about whether the current phase is your target phase, within a tolerance (5 degrees by default). The ``target_phase`` argument is specified in

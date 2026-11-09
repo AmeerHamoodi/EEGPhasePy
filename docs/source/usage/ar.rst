@@ -103,6 +103,13 @@ to return ``True``.
     polar_hist_fig = phastimate.polar_histogram_from_triggers(signal_noisy, triggers)
     waveform_fig = phastimate.plot_mean_std_waveform_from_triggers(signal_noisy, triggers, tmin=0.1, tmax=0.1)
 
-Examples 
+If you want the phase itself rather than a yes/no answer, :py:meth:`~EEGPhasePy.estimators.PHASTIMATE.estimate_phase` returns the estimated phase in degrees (0 to 360)
+at the sample immediately after the window.
+
+.. testcode::
+
+   current_phase = phastimate.estimate_phase(window)
+
+Examples
 ----------
 .. minigallery:: ../examples/ar-*
