@@ -12,7 +12,7 @@ from ..utils.check import (
     _check_real_number,
     _check_type,
 )
-from ..viz import plot_polar_histogram, plot_waveform_average
+from ..viz import plot_polar_histogram, plot_topomap, plot_waveform_average
 
 
 class Estimator:
@@ -449,3 +449,43 @@ class Estimator:
             data, triggers, degree=False)
 
         return plot_polar_histogram(phase_data)
+
+    def plot_topomap_from_triggers(self,
+                                   data: npt.ArrayLike,
+                                   triggers: npt.ArrayLike,
+                                   positions: npt.ArrayLike) -> \
+            matplotlib.pyplot.Figure:
+        '''
+        Plot the average voltage topography at trigger samples
+
+        Parameters
+        ----------
+        data : array_like (n_channels, n_samples)
+            The multichannel EEG data. Channels must be in the same order as
+            the rows of ``positions``.
+        triggers : array_like (n_triggers,)
+            The sample indices at which triggers occurred
+        positions : array_like (n_channels, 2)
+            The 2D location of each channel
+
+        Returns
+        -------
+        topomap_figure : matplotlib.pyplot.Figure
+            The pyplot figure of the average voltage topography
+        '''
+        data = _check_real_array(data, 'data', contents='voltage samples')
+        triggers = _check_real_array(
+            triggers, 'triggers', contents='sample indices')
+        _check_array_dimensions(data, [(1, 1)])
+        _check_array_dimensions(triggers, [(1,)])
+
+        if triggers.size == 0:
+            raise ValueError('triggers must contain at least one sample index')
+        if not np.all(triggers == np.floor(triggers)):
+            raise ValueError('triggers must contain integer sample indices')
+        if np.any(triggers < 0) or np.any(triggers >= data.shape[1]):
+            raise ValueError('triggers contain sample indices outside data')
+
+        trigger_indices = triggers.astype(np.intp)
+        trigger_voltages = data[:, trigger_indices].T
+        return plot_topomap(trigger_voltages, positions)

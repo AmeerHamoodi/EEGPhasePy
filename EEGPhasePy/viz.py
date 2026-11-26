@@ -7,8 +7,76 @@ phase histograms and pre-trigger/post-trigger waveforms
 import numpy as np
 import numpy.typing as npt
 import matplotlib.pyplot as plt
+import matplotlib.tri as tri
 
-from .utils.check import _check_type, _check_array_dimensions
+from .utils.check import (
+    _check_array_dimensions,
+    _check_real_array,
+    _check_type,
+)
+
+
+def plot_topomap(topomap_data: npt.ArrayLike,
+                 positions: npt.ArrayLike) -> plt.Figure:
+    '''
+    Plot the average voltage topography across trigger events
+
+    Parameters
+    ----------
+    topomap_data : array_like (n_triggers, n_channels)
+        Voltage values at t=0 for each trigger and channel
+    positions : array_like (n_channels, 2)
+        The 2D location of each channel, in the same order as
+        ``topomap_data`` columns
+
+    Returns
+    -------
+    figure : matplotlib.pyplot.Figure
+        The figure object for the average voltage topography
+    '''
+    topomap_data = _check_real_array(
+        topomap_data, 'topomap_data', contents='voltage values')
+    positions = _check_real_array(positions, 'positions',
+                                  contents='coordinates')
+    _check_array_dimensions(topomap_data, [(1, 1)])
+    _check_array_dimensions(positions, [(1, 1)])
+
+    if topomap_data.shape[0] == 0:
+        raise ValueError('topomap_data must contain at least one trigger')
+    if topomap_data.shape[1] < 3:
+        raise ValueError('At least three channel positions are required')
+    if positions.shape != (topomap_data.shape[1], 2):
+        raise ValueError(
+            'positions must have shape (n_channels, 2) and match '
+            'topomap_data')
+    if len(np.unique(positions, axis=0)) != len(positions):
+        raise ValueError('positions must not contain duplicate coordinates')
+    if np.linalg.matrix_rank(positions - positions[0]) < 2:
+        raise ValueError('positions must not be collinear')
+
+    mean_voltage = np.mean(topomap_data, axis=0)
+    if not np.all(np.isfinite(mean_voltage)):
+        raise ValueError('average voltage values must be finite')
+
+    color_limit = np.max(np.abs(mean_voltage))
+    if color_limit == 0:
+        color_limit = 1
+    levels = np.linspace(-color_limit, color_limit, 64)
+
+    x, y = positions.T
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    contour = ax.tricontourf(
+        tri.Triangulation(x, y), mean_voltage,
+        levels=levels, cmap='RdBu_r')
+    ax.scatter(x, y, c=mean_voltage, cmap='RdBu_r',
+               vmin=-color_limit, vmax=color_limit,
+               edgecolors='black', linewidths=0.5)
+    ax.set_aspect('equal')
+    ax.set_axis_off()
+    fig.colorbar(contour, ax=ax, label='Voltage')
+
+    return fig
 
 
 def plot_polar_histogram(phase_data: npt.ArrayLike,
