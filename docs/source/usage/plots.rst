@@ -1,8 +1,7 @@
 Plotting
 ========================
 
-EEGPhasePy comes with 2 plotting helper methods. We provide helper functions to plot the polar histogram given a set of trigger samples and 
-to plot the pre/post-trigger waveform average with standard deviation highlights. Each plotting method returns its :py:mod:`matplotlib` figure object.
+EEGPhasePy provides helper functions to plot the polar histogram given a set of trigger samples, the pre/post-trigger waveform average with standard deviation highlights, and the average voltage topography at trigger samples. Each plotting method returns its :py:mod:`matplotlib` figure object.
 
 All estimators contain stats and plotting helper methods. We will describe how the plotting methods in EEGPhasePy can be used 
 with and without an estimator.
@@ -55,6 +54,19 @@ plot the pre/post-stimulus waveform given an array of trigger samples and a pre-
     waveform_fig = etp.plot_mean_std_waveform_from_triggers(testing_signal, triggers, tmin=0.1, tmax=0.1)
 
 Unlike the polar histogram, you can only plot waveforms using an existing estimator.
+
+Topographic voltage map
+-----------------------
+Pass the multichannel recording (channels by samples), trigger sample indices,
+and one 2D coordinate per channel. The topomap averages the voltage at t=0
+across triggers. Keep channel ordering consistent between the recording and
+the coordinates:
+
+.. code-block:: Python
+   :caption: Plotting average trigger-locked topography
+
+    topomap_fig = etp.plot_topomap_from_triggers(
+        multichannel_data, triggers, channel_positions)
 
 Examples 
 ----------

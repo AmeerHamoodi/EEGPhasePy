@@ -150,3 +150,40 @@ def test_estimator_compute_phase_stats():
             param_set[0], param_set[1], degree=True) == pytest.approx(trigger_param_outputs[i][0], abs=6)
         assert estimator.std_phase_from_triggers(
             param_set[0], param_set[1], degree=True) == pytest.approx(trigger_param_outputs[i][1], abs=15)
+
+
+def test_plot_topomap_from_triggers(monkeypatch):
+    estimator = Estimator(np.array([1.0]), np.array([1.0]), 100)
+    data = np.arange(20).reshape(4, 5)
+    triggers = np.array([1, 3])
+    positions = np.array([
+        [-1.0, 0.0],
+        [0.0, 1.0],
+        [1.0, 0.0],
+        [0.0, -1.0],
+    ])
+    plotted = {}
+
+    def capture_topomap(topomap_data, channel_positions):
+        plotted['data'] = topomap_data
+        plotted['positions'] = channel_positions
+        return 'figure'
+
+    monkeypatch.setattr(
+        'EEGPhasePy.estimators.estimator.plot_topomap', capture_topomap)
+
+    result = estimator.plot_topomap_from_triggers(
+        data, triggers, positions)
+
+    assert result == 'figure'
+    np.testing.assert_array_equal(
+        plotted['data'], [[1, 6, 11, 16], [3, 8, 13, 18]])
+    np.testing.assert_array_equal(plotted['positions'], positions)
+
+
+def test_plot_topomap_from_triggers_rejects_out_of_range_sample():
+    estimator = Estimator(np.array([1.0]), np.array([1.0]), 100)
+
+    with pytest.raises(ValueError, match='outside data'):
+        estimator.plot_topomap_from_triggers(
+            np.ones((3, 5)), [5], np.ones((3, 2)))

@@ -16,7 +16,7 @@ EEGPhasePy includes implementations of various EEG phase estimation algorithms �
 - **PHASTIMATE** — Autoregressive phase estimator ([Zrenner et al., 2020](https://pubmed.ncbi.nlm.nih.gov/29191438/)): uses an AR model to compensate for filter edge effects and extracts instantaneous phase via the Hilbert transform. Estimates ongoing phase rather than predicting.
 - **EPN** — EEG Phase Prediction Network ([Liu et al., 2025](https://pmc.ncbi.nlm.nih.gov/articles/PMC11876478/)): a small neural network trained on each participant's resting-state EEG that maps a raw EEG window directly to the current phase. Implemented in NumPy, so no deep learning framework is required.
 - **Parameter optimization** — Bayesian and genetic optimization (via `bayesian-optimization` and `PyGAD`) over AR order and window edge for PHASTIMATE. Improve accuracy of the AR model on a participant-by-participant basis.
-- **Visualization** — Polar phase histograms and average ± std pre/post-trigger waveforms via `matplotlib`.
+- **Visualization** — Polar phase histograms, average ± std pre/post-trigger waveforms, and trigger-locked voltage topographies via `matplotlib`.
 - Supports Python 3.9–3.13.
 
 ## Documentation
@@ -118,9 +118,15 @@ polar_fig = etp.polar_histogram_from_triggers(testing_signal, triggers)
 waveform_fig = etp.plot_mean_std_waveform_from_triggers(
     testing_signal, triggers, tmin=0.1, tmax=0.1
 )
+
+# Average voltage topography at trigger samples. The recording is channels ×
+# samples, and channel_positions contains one 2D coordinate per channel.
+topomap_fig = etp.plot_topomap_from_triggers(
+    multichannel_data, triggers, channel_positions
+)
 ```
 
-Both functions return a `matplotlib.figure.Figure`. See the [waveform plots](https://eegphasepy.readthedocs.io/en/latest/usage/waveform_plots.html) and [polar histograms](https://eegphasepy.readthedocs.io/en/latest/usage/polar_histograms.html) documentation for color and style customization options.
+All plotting methods return a `matplotlib.figure.Figure`. See the [waveform plots](https://eegphasepy.readthedocs.io/en/latest/usage/waveform_plots.html) and [polar histograms](https://eegphasepy.readthedocs.io/en/latest/usage/polar_histograms.html) documentation for color and style customization options.
 
 ## Contributing
 
