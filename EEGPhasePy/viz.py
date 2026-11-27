@@ -7,7 +7,9 @@ phase histograms and pre-trigger/post-trigger waveforms
 import numpy as np
 import numpy.typing as npt
 import matplotlib.pyplot as plt
-import matplotlib.tri as tri
+from matplotlib.patches import Circle, PathPatch
+from matplotlib.path import Path
+from scipy.interpolate import RBFInterpolator
 
 from .utils.check import (
     _check_array_dimensions,
@@ -20,6 +22,9 @@ def plot_topomap(topomap_data: npt.ArrayLike,
                  positions: npt.ArrayLike) -> plt.Figure:
     '''
     Plot the average voltage topography across trigger events
+
+    The voltage field is smoothly interpolated between channel positions and
+    displayed within a schematic head outline.
 
     Parameters
     ----------
@@ -63,16 +68,56 @@ def plot_topomap(topomap_data: npt.ArrayLike,
         color_limit = 1
     levels = np.linspace(-color_limit, color_limit, 64)
 
-    x, y = positions.T
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    contour = ax.tricontourf(
-        tri.Triangulation(x, y), mean_voltage,
-        levels=levels, cmap='RdBu_r')
-    ax.scatter(x, y, c=mean_voltage, cmap='RdBu_r',
-               vmin=-color_limit, vmax=color_limit,
-               edgecolors='black', linewidths=0.5)
+    centered_positions = positions - positions.mean(axis=0)
+    position_radius = np.max(np.linalg.norm(centered_positions, axis=1))
+    head_radius = 1.0
+    sensor_positions = centered_positions * (0.9 / position_radius)
+
+    grid_axis = np.linspace(-1.1, 1.1, 128)
+    grid_x, grid_y = np.meshgrid(grid_axis, grid_axis)
+    grid_points = np.column_stack((grid_x.ravel(), grid_y.ravel()))
+    interpolator = RBFInterpolator(
+        sensor_positions, mean_voltage, kernel='thin_plate_spline')
+    voltage_grid = interpolator(grid_points).reshape(grid_x.shape)
+    outside_head = grid_x**2 + grid_y**2 > head_radius**2
+    voltage_grid[outside_head] = np.nan
+
+    fig, ax = plt.subplots(figsize=(6, 5))
+    contour = ax.contourf(
+        grid_x, grid_y, voltage_grid,
+        levels=levels, cmap='RdYlBu_r', extend='both')
+    ax.contour(
+        grid_x, grid_y, voltage_grid,
+        levels=np.linspace(-color_limit, color_limit, 9),
+        colors='black', linewidths=0.45, alpha=0.65)
+    ax.scatter(
+        sensor_positions[:, 0], sensor_positions[:, 1],
+        c=mean_voltage, cmap='RdYlBu_r',
+        vmin=-color_limit, vmax=color_limit,
+        edgecolors='black', linewidths=0.4, s=14)
+
+    ax.add_patch(Circle(
+        (0, 0), head_radius, fill=False, edgecolor='black', linewidth=1.2))
+    ax.plot([-0.08, 0, 0.08], [head_radius, 1.09, head_radius],
+            color='black', linewidth=1.2)
+    ear_vertices = [
+        (-head_radius, 0.18),
+        (-1.09, 0.14),
+        (-1.09, -0.14),
+        (-head_radius, -0.18),
+    ]
+    ear_codes = [
+        Path.MOVETO, Path.CURVE3, Path.CURVE3, Path.LINETO,
+    ]
+    for direction in (-1, 1):
+        vertices = [(direction * x, y) for x, y in ear_vertices]
+        ax.add_patch(PathPatch(
+            Path(vertices, ear_codes),
+            fill=False, edgecolor='black', linewidth=1.2))
+
     ax.set_aspect('equal')
+    ax.set_xlim(-1.15, 1.15)
+    ax.set_ylim(-1.15, 1.15)
     ax.set_axis_off()
     fig.colorbar(contour, ax=ax, label='Voltage')
 

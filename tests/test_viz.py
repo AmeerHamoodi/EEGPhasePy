@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib.figure
+from matplotlib.patches import Circle
 import numpy as np
 import pytest
 
@@ -24,6 +25,8 @@ def test_plot_topomap_averages_trigger_values():
         np.testing.assert_array_equal(
             figure.axes[0].collections[-1].get_array(),
             [2.0, 3.0, 4.0, 5.0])
+        assert any(
+            isinstance(patch, Circle) for patch in figure.axes[0].patches)
     finally:
         plt.close(figure)
 

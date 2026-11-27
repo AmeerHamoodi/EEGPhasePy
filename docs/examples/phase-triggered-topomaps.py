@@ -4,18 +4,20 @@ Offline C3 alpha phase-triggered topomaps
 '''
 
 # %% [markdown]
-# This example uses the eyes-closed recording from ``ds004504`` used in the
-# other EEGPhasePy tutorials. It selects simulated trigger samples at the
-# positive peak, falling slope, trough, and rising slope of C3 alpha activity,
-# then plots the average alpha-band voltage topography at each sample.
+# This example uses participant 1's eyes-closed resting recording (run 2)
+# from the 64-channel PhysioNet EEG Motor Movement/Imagery dataset. It selects
+# offline pseudo-trigger samples at the peak, falling slope, trough, and rising
+# slope of C3 alpha activity, then plots the average 64-channel alpha voltage
+# topography at each sample.
 #
-# The dataset contains resting EEG, not TMS trials. These are retrospective,
-# zero-phase-filtered pseudo-triggers for visualization; they do not simulate
-# a real-time phase estimator or a TMS response.
+# Phase is estimated from a local surface-Laplacian approximation:
+# ``C3 - mean(C1, C5, FC3, CP3)``. This spatial filter changes the C3 phase
+# relative to using the raw C3 signal. The Laplacian is used only to select
+# trigger times; each topography shows the original 64 sensor voltages at those
+# times. Because this is a retrospective resting recording, the example does
+# not simulate real-time prediction and contains no TMS trials or responses.
 
 # %%
-from pathlib import Path
-
 import matplotlib.pyplot as plt
 import mne
 import numpy as np
@@ -24,43 +26,42 @@ from EEGPhasePy import viz
 
 
 # %%
-dataset_dir = Path(__file__).resolve().parent / 'ds004504'
-recording_path = (
-    dataset_dir / 'sub-001' / 'eeg' /
-    'sub-001_task-eyesclosed_eeg.set'
-)
-if not recording_path.exists():
-    import openneuro
-
-    openneuro.download(
-        dataset='ds004504',
-        tag='1.0.8',
-        target_dir=str(dataset_dir),
-        include=['sub-001']
-    )
-
-raw = mne.io.read_raw_eeglab(
-    str(recording_path),
-    preload=True,
+eeg_file = mne.datasets.eegbci.load_data(
+    subjects=[1],
+    runs=[2],
+    update_path=True,
     verbose=False
-)
+)[0]
+raw = mne.io.read_raw_edf(eeg_file, preload=True, verbose=False)
+mne.datasets.eegbci.standardize(raw)
+raw.set_montage(mne.channels.make_standard_montage('standard_1005'))
 
 sampling_rate = int(raw.info['sfreq'])
 eeg_data = raw.get_data()
 c3_index = raw.ch_names.index('C3')
+neighbor_indices = [
+    raw.ch_names.index(name) for name in ('C1', 'C5', 'FC3', 'CP3')
+]
+c3_laplacian = (
+    eeg_data[c3_index] - eeg_data[neighbor_indices].mean(axis=0)
+)
 
 
 # %% [markdown]
-# Filter all channels to the alpha band. The analytic phase at C3 is used to
-# choose the pseudo-trigger times. With this Hilbert phase convention, phase
-# 0 is the positive peak, :math:`\\pi/2` is the falling slope, :math:`\\pi`
-# is the trough, and :math:`-\\pi/2` is the rising slope.
+# Filter the sensor data and the C3 Laplacian to the alpha band. The analytic
+# phase of the Laplacian signal is used to choose the pseudo-trigger times.
+# With this Hilbert phase convention, phase 0 is the positive peak,
+# :math:`\\pi/2` is the falling slope, :math:`\\pi` is the trough, and
+# :math:`-\\pi/2` is the rising slope. Filtering is zero-phase and uses the
+# full recording, so this is an offline visualization rather than a real-time
+# trigger simulation.
 
 # %%
 alpha_sos = signal.butter(
     4, [8, 12], btype='bandpass', fs=sampling_rate, output='sos')
 alpha_data = signal.sosfiltfilt(alpha_sos, eeg_data, axis=-1)
-c3_phase = np.angle(signal.hilbert(alpha_data[c3_index]))
+c3_alpha_laplacian = signal.sosfiltfilt(alpha_sos, c3_laplacian)
+c3_phase = np.angle(signal.hilbert(c3_alpha_laplacian))
 
 phase_targets = {
     'Peak': 0.0,
@@ -98,12 +99,11 @@ for phase_name, target_phase in phase_targets.items():
 
 
 # %% [markdown]
-# Use the channel locations embedded in the EEGLAB file. Coordinates are
-# centered and scaled for the plotting helper. EEG data from MNE are in volts,
-# so convert to microvolts for readable colorbar values.
-#
-# Each map chooses its own symmetric color range. Use the colorbar values, not
-# color saturation alone, when comparing voltage magnitudes across phases.
+# Use the standard 1005 montage to position all 64 channels. Coordinates are
+# centered and scaled for the plotting helper. MNE stores EEG data in volts,
+# so convert to microvolts for readable colorbar values. Each map chooses its
+# own symmetric color range; use the colorbar values, not color saturation
+# alone, when comparing voltage magnitudes across phases.
 
 # %%
 layout = mne.channels.make_eeg_layout(raw.info)
